@@ -107,6 +107,11 @@ enum {
       S_VARIABLE, S_FUNCTION, S_ARRAY,
 };
 
+// Storage classes
+enum {
+      C_GLOBAL = 1,
+      C_LOCAL,
+};
 //Token structure
 struct token{
     int token;
@@ -130,11 +135,13 @@ struct ASTnode{
 
 // Symbol table structure
 struct symtables {
-    char *name;
-    int type;
-    int stype;
-    int endlabel;
-    int size;              // array element size
+  char *name;
+  int type;
+  int stype;
+  int clas;
+  int endlabel;
+  int size;              // array element size
+  int posn;              //  from the stack base pointer
 };
 
 #endif // DEFS_H_

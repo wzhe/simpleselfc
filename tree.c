@@ -56,7 +56,8 @@ void shownode(struct ASTnode* node,
                || node->op == A_FUNCCALL
                || node->op == A_ADDR
                ) {
-        printf(" name:%s", Gsym[node->v.id].name);
+        printf(" name:%s", Symtable[node->v.id].name);
+        printf(" clas:%d", Symtable[node->v.id].clas);
     }
     printf(" type:%s", typestr(node->type));
     printf(" %s", node->rvalue ? "rvalue" : "lvalue");

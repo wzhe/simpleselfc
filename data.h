@@ -15,5 +15,8 @@ extern_ FILE *Outfile;
 extern_ struct token Token;
 
 extern_ char Text[TEXTLEN + 1];
-extern_ struct symtables Gsym[NSYMBOLS];
+extern_ struct symtables Symtable[NSYMBOLS];
+extern_ int Globs;
+extern_ int Locls;
+
 #endif // DATA_H_

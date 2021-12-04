@@ -57,7 +57,7 @@ struct ASTnode* funccall(void) {
     // Check that the identifier has been defined,
     // then make a leaf node for it.
     // XXX Add structural type test, should confirm the identifier is really an S_FUNCTION
-    if ((id = findglob(Text)) == -1) {
+    if ((id = findsym(Text)) == -1) {
         fatals("Undeclared function", Text);
     }
 
@@ -70,7 +70,7 @@ struct ASTnode* funccall(void) {
     // Build the function call AST node.
     // Store the function's return type as this node's type.
     // Also record the function's symbol-id
-    tree = mkastunary(A_FUNCCALL, tree, id, Gsym[id].type);
+    tree = mkastunary(A_FUNCCALL, tree, id, Symtable[id].type);
 
     // Get the ')'
     rparen();
@@ -89,7 +89,7 @@ static struct ASTnode* array_access(void) {
     if ((id = findglob(Text)) == -1) {
         fatals("Undeclared array", Text);
     }
-    left = mkastleaf(A_ADDR, id, Gsym[id].type);
+    left = mkastleaf(A_ADDR, id, Symtable[id].type);
 
     // Skip the '['
     scan(&Token);
@@ -106,7 +106,7 @@ static struct ASTnode* array_access(void) {
     // Return an AST tree where the array's base hase the offset
     // added to it, and dereference the element. Still an lvalue
     // at this point.
-    left = mkastnode(A_ADD, left, NULL, right, 0, Gsym[id].type);
+    left = mkastnode(A_ADD, left, NULL, right, 0, Symtable[id].type);
     left = mkastunary(A_DEREF, left, 0, value_at(left->type));
 
     return (left);
@@ -130,21 +130,21 @@ static struct ASTnode* postfix(void) {
         return (array_access());
 
     // A variable. Check that the variable exists.
-    id = findglob(Text);
-    if (id == -1 || Gsym[id].stype != S_VARIABLE)
+    id = findsym(Text);
+    if (id == -1 || Symtable[id].stype != S_VARIABLE)
         fatals("Unknown variable", Text);
 
     switch (Token.token) {
         case T_INC:
             scan(&Token);
-            n = mkastleaf(A_POSTINC, id, Gsym[id].type);
+            n = mkastleaf(A_POSTINC, id, Symtable[id].type);
             break;
         case T_DEC:
             scan(&Token);
-            n = mkastleaf(A_POSTDEC, id, Gsym[id].type);
+            n = mkastleaf(A_POSTDEC, id, Symtable[id].type);
             break;
         default:
-            n = mkastleaf(A_IDENT, id, Gsym[id].type);
+            n = mkastleaf(A_IDENT, id, Symtable[id].type);
     }
 
     return (n);

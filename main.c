@@ -8,8 +8,13 @@
 // Initialise global variables
 static void init(){
     Line = 1;
-    Outdump = 0;
     Putback = '\n';
+    Outdump = 0;
+    Functionid = 0;
+    Infile = NULL;
+    Outfile = NULL;
+    Globs = 0;
+    Locls = NSYMBOLS - 1;
 }
 
 // Print out a usage if started incorrectly

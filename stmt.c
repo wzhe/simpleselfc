@@ -177,8 +177,8 @@ static struct ASTnode* return_statement(){
     struct ASTnode *tree;
 
     // Can't return a value if function returns P_VOID
-    if (Gsym[Functionid].type == P_VOID)
-        fatals("Can't return from a void function", Gsym[Functionid].name);
+    if (Symtable[Functionid].type == P_VOID)
+        fatals("Can't return from a void function", Symtable[Functionid].name);
 
     // Match a 'print' as the first token.
     match(T_RETURN, "return");
@@ -190,7 +190,7 @@ static struct ASTnode* return_statement(){
     tree = binexpr(0);
 
     // Ensure this is compatible with the function's type
-    tree = modify_type(tree, Gsym[Functionid].type, 0);
+    tree = modify_type(tree, Symtable[Functionid].type, 0);
     if (tree == NULL) fatal("Incompatible type in return");
 
     tree = mkastunary(A_RETURN, tree, 0, P_NONE);
@@ -208,7 +208,7 @@ struct ASTnode* single_statement(void) {
         case T_LONG:
             type = parse_type();
             ident();
-            var_declaration(type);
+            var_declaration(type, 1);
             return (NULL);            // No AST generated here
             // case T_IDENT:
             //return assignment_statement();

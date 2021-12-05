@@ -175,10 +175,10 @@ int genAST(struct ASTnode *n, int label, int parentASTop){
     // Load our value if we are an rvalue
     // or we are being dereferenced
     if (n->rvalue || parentASTop == A_DEREF) {
-      if (Symtable[n->v.id].clas == C_LOCAL) {
-	return (cgloadlocal(n->v.id, n->op));
-      } else {
+      if (Symtable[n->v.id].clas == C_GLOBAL) {
 	return (cgloadglob(n->v.id, n->op));
+      } else {
+	return (cgloadlocal(n->v.id, n->op));
       }
     } else
       return (NOREG);
@@ -192,7 +192,12 @@ int genAST(struct ASTnode *n, int label, int parentASTop){
   case A_ASSIGN:
     // Are we assigning to an identifier or through a pointer?
     switch (n->right->op) {
-    case A_IDENT: return (cgstorglob(leftreg, n->right->v.id));
+    case A_IDENT:
+      if (Symtable[n->right->v.id].clas == C_GLOBAL) {
+	return (cgstorglob(leftreg, n->right->v.id));
+      } else {
+	return (cgstorlocal(leftreg, n->right->v.id));
+      }
     case A_DEREF: return (cgstorderef(leftreg, rightreg, n->right->type));
     default:  fatald("Can't A_SSIGN in genAST, op", n->op);
     }
@@ -249,10 +254,3 @@ void genfreeregs() { freeall_registers(); }
 void genprintint(int reg) { cgprintint(reg); }
 void genglobsym(int id) { cgglobsym(id); }
 int genprimsize(int type) { return cgprimsize(type); }
-
-void genresetlocals() {
-  cgresetlocals();
-}
-int gengetlocaloffset(int type, int isparam) {
-  return (cggetlocaloffset(type,isparam));
-}

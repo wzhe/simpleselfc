@@ -31,8 +31,6 @@ void genglobsym(int id);
 int genprimsize(int type);
 int genlabel(void);
 int genglobstr(char *strvalue);
-void genresetlocals(); // Reset position of new locals
-int gengetlocaloffset(int type, int isparam);  // XXX 0 for now 
 
 // stmt.c
 struct ASTnode* single_statement(void);
@@ -65,7 +63,7 @@ int findsym(char *s);
 
 // decl.c
 int parse_type(void);
-void var_declaration(int type, int islocal);
+void var_declaration(int type, int islocal, int isparam);
 struct ASTnode* function_declaration(int type);
 void global_declarations(void);
 

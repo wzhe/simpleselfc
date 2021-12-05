@@ -9,7 +9,7 @@ clean:
 test: $(TARGET) tests/runtests.sh
 	(cd tests; chmod +x runtests.sh; ./runtests.sh)
 
-test22: $(TARGET)
-	./$(TARGET) -T tests/input22.c
+$(NUM): $(TARGET)
+	./$(TARGET) -T tests/input$(NUM).c
 	cc -o out out.s lib/printint.c
 	./out

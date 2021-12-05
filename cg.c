@@ -1,11 +1,18 @@
 #include "defs.h"
 #include "data.h"
 #include "decl.h"
+#include "cg.h"
 
-static int freereg[4];
-static char *reglist[]={"%r8", "%r9", "%r10", "%r11"};
-static char *breglist[]={"%r8b", "%r9b", "%r10b", "%r11b"};
-static char *dreglist[]={"%r8d", "%r9d", "%r10d", "%r11d"};
+#define NUMFREEREGS 4
+#define FIRSTPARAMRE  9
+static int freereg[NUMFREEREGS];
+
+static char *reglist[] =
+  {"%r10", "%r11", "%r12", "%r13", "%r9", "%r8", "%rcx", "%rdx", "%rsi", "%rdi" };
+static char *breglist[] =
+  {"%r10b", "%r11b", "%r12b", "%r13b", "%r9b", "%r8b", "%cl", "%dl", "%sil", "%dil" };
+static char *dreglist[] =
+  {"%r10d", "%r11d", "%r12d", "%r13d", "%r9d", "%r8d", "%ecx", "%edx", "%esi", "%edi" };
 
 static int psize[] = {
 		      0,  // P_NONE,
@@ -26,23 +33,9 @@ static int stackOffset;
 // Flag to say which section were are outputing in to
 enum { no_seg, text_seg, data_seg} currSeg = no_seg;
 
-int cgprimsize(int type) {
-  if (type < P_NONE || type > P_LONGPTR)
-    fatald("Bad type in cgprimsize()", type);
-  return (psize[type]);
-}
-
-void freeall_registers(void)
-{
-  freereg[0] = 1;
-  freereg[1] = 1;
-  freereg[2] = 1;
-  freereg[3] = 1;
-}
-
 static int alloc_register(void) {
   int i;
-  for (i = 0; i < 4; i++) {
+  for (i = 0; i < NUMFREEREGS; i++) {
     if (freereg[i]) {
       freereg[i] = 0;
       return (i);
@@ -60,10 +53,32 @@ static void free_register(int reg) {
   freereg[reg] = 1;
 }
 
+// Get the position of the next local variable.
+// Use the isparam flag to allocate a parameter (not yet XXX).
+static int cggetlocaloffset(int type) {
+  // Decrement the offset by a minimum of 4 bytes
+  // and allocate on the stack
+  localOffset += (cgprimsize(type) > 4) ? cgprimsize(type) : 4;
+  return (-localOffset);
+}
+
+int cgprimsize(int type) {
+  if (type < P_NONE || type > P_LONGPTR)
+    fatald("Bad type in cgprimsize()", type);
+  return (psize[type]);
+}
+
+void freeall_registers(void)
+{
+  freereg[0] = 1;
+  freereg[1] = 1;
+  freereg[2] = 1;
+  freereg[3] = 1;
+}
+
 // Print out the assembly preamble
 void cgpreamble(){
   freeall_registers();
-  fputs("\t.text\n", Outfile);
 }
 
 // Print out the assembly postamble
@@ -76,13 +91,13 @@ void cgpostamble() {
 }
 
 
-static void  cgtextseg() {
+static void cgtextseg() {
   if (currSeg != text_seg) {
     fprintf(Outfile, "\t.text\n");
     currSeg = text_seg;
   }
 }
-static void  cgtdataseg() {
+static void cgdataseg() {
   if (currSeg != data_seg) {
     fprintf(Outfile, "\t.data\n");
     currSeg = data_seg;
@@ -99,21 +114,46 @@ void cgjump(int l) {
 // Print out a function preamble
 void cgfuncpreamble(int id) {
   char *name = Symtable[id].name;
+  int i;
+  int paramOffset = 16;        // Any pushed param start at this stack offset.
+  int paramReg = FIRSTPARAMRE; // Index to the first param register in above reg list
 
+  // Output in the text segment, reset local offset
   cgtextseg();
+  localOffset = 0;
 
-  // Align the stack pointer to be a multiple of 16
-  // less than its previous value
-  stackOffset = (localOffset+15) & ~15;
-  
+  // Output the function start, save the %rsp and rbp
   fprintf(Outfile,
 	  "\t.globl\t%s\n"
 	  "\t.type\t%s, @function\n"
 	  "%s:\n"
 	  "\tpushq\t%%rbp\n"
-	  "\tmovq\t%%rsp, %%rbp\n"
-	  "\taddq\t$%d, %%rsp\n",
-	  name, name, name, -stackOffset);
+	  "\tmovq\t%%rsp, %%rbp\n",
+	  name, name, name);
+
+  // Copy any in-register parameters to the stack
+  // Stop after no more than six parameter registers
+  for (i = NSYMBOLS - 1; i > Locls; i--) {
+    if (Symtable[i].clas != C_PARAM) break;
+    if (i < NSYMBOLS - 6) break;
+    Symtable[i].posn = cggetlocaloffset(Symtable[i].type);
+    cgstorlocal(paramReg--, i);
+  }
+  // For the remainder, if they are a parameter then they are
+  // already on the stack. If only a local, make a stack position.
+  for (; i > Locls; i--) {
+    if (Symtable[i].clas == C_PARAM) {
+      Symtable[i].posn = paramOffset;
+      paramOffset += 8;
+    } else {
+      Symtable[i].posn = cggetlocaloffset(Symtable[i].type);
+    }
+  }
+
+  // Align the stack pointer to be a multiple of 16
+  // less than its previous value
+  stackOffset = (localOffset + 15) & ~15;
+  fprintf(Outfile, "\taddq\t$%d, %%rsp\n", -stackOffset);
 }
 
 void cgfuncpostamble(int id) {
@@ -136,11 +176,15 @@ int cgloadint(int value) {
 void cgglobsym(int id) {
   int typesize;
   int i;
+
+  if (Symtable[id].stype == S_FUNCTION)
+    return;
+
   // Get the size of the type
   typesize = cgprimsize(Symtable[id].type);
 
   // Generate the golbl identify and the label
-  fprintf(Outfile, "\t.data\n");
+  cgdataseg();
   fprintf(Outfile, "\t.globl\t%s\n", Symtable[id].name);
   fprintf(Outfile, "%s:\n", Symtable[id].name);
 
@@ -174,7 +218,25 @@ int cgstorglob(int r, int id) {
   }
   return (r);
 }
-
+int cgstorlocal(int r, int id) {
+  switch(Symtable[id].type){
+  case P_CHAR:
+    fprintf(Outfile, "\tmovb\t%s, %d(%%rbp)\n", breglist[r], Symtable[id].posn);
+    break;
+  case P_INT:
+    fprintf(Outfile, "\tmovl\t%s, %d(%%rbp)\n", dreglist[r], Symtable[id].posn);
+    break;
+  case P_LONG:
+  case P_CHARPTR:
+  case P_INTPTR:
+  case P_LONGPTR:
+    fprintf(Outfile, "\tmovq\t%s, %d(%%rbp)\n", reglist[r], Symtable[id].posn);
+    break;
+  default:
+    fatald("Bad type in cgstorlocal", Symtable[id].type);
+  }
+  return (r);
+}
 // Call a function with one argument from the given register
 // Return the register with result
 int cgcall(int r, int id) {
@@ -213,7 +275,7 @@ int cgwiden(int r, int oldtype, int newtype) {
 }
 
 static void checkreg(int r) {
-  if (r < 0 || r > 4) fatald("register out range. reg", r);
+  if (r < 0 || r > NUMFREEREGS) fatald("register out range. reg", r);
 }
 
 int cgadd(int r1, int r2) {
@@ -321,7 +383,14 @@ int cgcompare_and_jump(int ASTop, int r1, int r2, int label) {
 int cgaddress(int id) {
   int r = alloc_register();
 
-  fprintf(Outfile, "\tleaq\t%s(%%rip), %s\n", Symtable[id].name, reglist[r]);
+  if (Symtable[id].clas == C_GLOBAL) {
+    fprintf(Outfile, "\tleaq\t%s(%%rip), %s\n", Symtable[id].name, reglist[r]);
+  }
+  else if (Symtable[id].clas == C_LOCAL) {
+    fprintf(Outfile, "\tleaq\t%d(%%rbp), %s\n", Symtable[id].posn, reglist[r]);
+  } else {
+    fatals("Now not support addres param:", Symtable[id].name);
+  }
 
   return (r);
 }
@@ -544,14 +613,5 @@ void cgresetlocals(void) {
   localOffset = 0;
 }
 
-// Get the position of the next local variable.
-// Use the isparam flag to allocate a parameter (not yet XXX).
-int cggetlocaloffset(int type, int isparam) {
-  // Decrement the offset by a minimum of 4 bytes
-  // and allocate on the stack
-  localOffset += (cgprimsize(type) > 4) ? cgprimsize(type) : 4;
-  (void)isparam;
-  return (-localOffset);
-}
 
 

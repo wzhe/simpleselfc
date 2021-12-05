@@ -20,6 +20,7 @@ static void updatesym(int slot, char *name, int type, int stype, int clas, int l
 int findglob(char *s) {
   int i;
   for (i = 0; i < Globs; i++) {
+    if (Symtable[i].clas == C_PARAM) continue;
     if (*s == *Symtable[i].name && !strcmp(Symtable[i].name, s)) {
       return (i);
     }
@@ -61,16 +62,17 @@ static int newlocl(void) {
 }
 
 int addglob(char *name, int type, int stype, int label, int size) {
-  int y;
+  int slot;
 
-  if ((y = findglob(name)) != -1) {
-    return y;
+  if ((slot = findglob(name)) != -1) {
+    return slot;
   }
 
-  y = newglob();
-  updatesym(y,name, type, stype, C_GLOBAL, label, size, 0);
+  slot = newglob();
+  updatesym(slot,name, type, stype, C_GLOBAL, label, size, 0);
+  genglobsym(slot);
 
-  return (y);
+  return (slot);
 }
 
 // Add a local symbol to the symbol table. Set up its:
@@ -79,16 +81,21 @@ int addglob(char *name, int type, int stype, int label, int size) {
 // +size: number of elements
 // +endlabel: if this is a function
 // Return the slot number in the symbol table
-int addlocl(char *name, int type, int stype, int label, int size) {
-  int slot, posn;
+int addlocl(char *name, int type, int stype, int isparam, int size) {
+  int localslot, globalslot;
 
-  if ((slot = findglob(name)) != -1) {
-    return slot;
+  if ((localslot = findglob(name)) != -1) {
+    return localslot;
   }
 
-  slot = newlocl();
-  posn = gengetlocaloffset(type, 0);  // XXX 0 for now 
-  updatesym(slot, name, type, stype, C_LOCAL, label, size, posn);
-  return (slot);
+  localslot = newlocl();
+  if (isparam) {
+    updatesym(localslot, name, type, stype, C_PARAM, 0, size, 0);
+    globalslot = newglob();
+    updatesym(globalslot, name, type, stype, C_LOCAL, 0, size, 0);
+  } else {
+    updatesym(localslot, name, type, stype, C_LOCAL, 0, size, 0);
+  }
+  return (localslot);
 }
 

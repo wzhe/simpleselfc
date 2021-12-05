@@ -9,6 +9,7 @@ void cgglobsym(int id);
 int cgloadglob(int id, int op);
 int cgstorglob(int r, int id);
 int cgloadlocal(int id, int op);
+int cgstorlocal(int r, int id);
 
 int cgloadint(int value);
 int cgadd(int r1, int r2);
@@ -49,6 +50,3 @@ int cgshl(int r1, int r2);
 int cgshr(int r1, int r2);
 int cglognot(int r);
 int cgboolean(int r, int op, int label);
-
-void cgresetlocals(void);
-int cggetlocaloffset(int type, int isparam);

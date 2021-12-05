@@ -111,6 +111,7 @@ enum {
 enum {
       C_GLOBAL = 1,
       C_LOCAL,
+      C_PARAM,        // Locall visible function parameter
 };
 //Token structure
 struct token{
@@ -142,6 +143,9 @@ struct symtables {
   int endlabel;
   int size;              // array element size
   int posn;              //  from the stack base pointer
+
+#define nelems posn    // For functions, #of params
+                       // For structs, # of field
 };
 
 #endif // DEFS_H_

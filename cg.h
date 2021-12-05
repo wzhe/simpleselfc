@@ -50,3 +50,5 @@ int cgshl(int r1, int r2);
 int cgshr(int r1, int r2);
 int cglognot(int r);
 int cgboolean(int r, int op, int label);
+
+void cgcopyarg(int r, int argposn);

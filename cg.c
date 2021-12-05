@@ -237,14 +237,21 @@ int cgstorlocal(int r, int id) {
   }
   return (r);
 }
-// Call a function with one argument from the given register
+// Call a function with the given symbol id
+// Pop off any arguments pushed on the stack
 // Return the register with result
-int cgcall(int r, int id) {
+int cgcall(int id, int numargs) {
+
   int outr = alloc_register();
-  fprintf(Outfile, "\tmovq\t%s, %%rdi\n", reglist[r]);
+
+  // Call the function
   fprintf(Outfile, "\tcall\t%s\n", Symtable[id].name);
+  // Remove any arguments pushed on the stack
+  if (numargs > 6) 
+    fprintf(Outfile, "\taddq\t$%d, %%rsp\n", 8*(numargs-6));
+  
   fprintf(Outfile, "\tmovq\t%%rax, %s\n", reglist[outr]);
-  free_register(r);
+
   return (outr);
 }
 void cgreturn(int r, int id){
@@ -613,5 +620,23 @@ void cgresetlocals(void) {
   localOffset = 0;
 }
 
+// Given a registre with an argument value,
+// copy this argument into the argposn'th parameter
+// in preparation for a future function call.
+// Note that argposn is 1,2,3,4,..., never zero.
+void cgcopyarg(int r, int argposn) {
+  // If this is above the sixth argument, simply push the
+  // register on the stack. We rely on being called with
+  // successive arguments in the correct order for x86-64
+  if (argposn > 6) {
+    fprintf(Outfile, "\tpushq\t%s\n", reglist[r]);
+  } else {
+    // Otherwise, copy the value into one of the six registers
+    // used to hold parameter values
+    // Note : not zeor base, need +1
+    fprintf(Outfile, "\tmovq\t%s, %s\n", reglist[r],
+	    reglist[FIRSTPARAMRE - argposn + 1]);
+  }
+}
 
 

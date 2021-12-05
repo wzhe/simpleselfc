@@ -11,7 +11,8 @@
 //#define Debug 0        // add flag in command line
 #define TEXTLEN 512      // Max token len
 #define NSYMBOLS 1024    // Max symbols num
-#define NOREG -1   // Use NOREG when the AST generation functions have no register to return
+#define NOREG -1         // Use NOREG when the AST generation functions have no register to return
+#define NOLABEL 0        // Use NOLABEL when we have no label to pass to genAST()
 
 //Token
 enum {
@@ -89,9 +90,9 @@ A_FOR,
 A_FUNCTION,
 A_RETURN,
 A_FUNCCALL,
-A_GLUE,
 A_WIDEN,
 A_SCALE,
+A_GLUE,
 A_SIZE,  // Just count the eumn size;
 };
 

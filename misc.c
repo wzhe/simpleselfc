@@ -121,9 +121,9 @@ char* asttypestr(int asttype) {
     "functiondecl",
     "return",
     "call",
-    "glue",
     "widen",
     "scale",
+    "glue",
 };
     if ((sizeof(asttypestr) / sizeof(asttypestr[0])) != A_SIZE)
         fatal("miss some asttype str, please check");

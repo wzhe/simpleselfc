@@ -48,6 +48,37 @@ static int binthop(int tok) {
     return tok;
 }
 
+// expression_list: <null>
+//                  | expression
+//                  | expression ',' expression_list
+
+static struct ASTnode* expression_list(void) {
+  struct ASTnode *tree = NULL;
+  struct ASTnode *child = NULL;
+  int exprcount = 0;
+
+  // Loop until the final right parenthese
+  while (Token.token != T_RPAREN) {
+    // Get the type and identifier
+    // and add it to the symbol table
+    child = binexpr(0);
+    exprcount++;
+
+    // Build an A_GLUE AST node with the previous tree  as tree left child
+    // and then new expression as the right child.
+    tree = mkastnode(A_GLUE, tree, NULL, child, exprcount, P_NONE);
+    
+    // Must have a ',' or ')' at this point
+    switch (Token.token) {
+    case T_COMMA: scan(&Token); break;
+    case T_RPAREN:break;
+    default:
+      fatals("Unexpected token in expression list", tokenstr(Token.token));
+    }
+  }
+  return tree;
+}
+
 // Parse a function call with a single expression
 // argument and return its AST
 struct ASTnode* funccall(void) {
@@ -57,7 +88,7 @@ struct ASTnode* funccall(void) {
     // Check that the identifier has been defined,
     // then make a leaf node for it.
     // XXX Add structural type test, should confirm the identifier is really an S_FUNCTION
-    if ((id = findsym(Text)) == -1) {
+    if ((id = findsym(Text)) == -1 || Symtable[id].stype != S_FUNCTION) {
         fatals("Undeclared function", Text);
     }
 
@@ -65,8 +96,10 @@ struct ASTnode* funccall(void) {
     lparen();
 
     // Parse the following expression
-    tree = binexpr(0);
+    tree = expression_list();
 
+    // TODO: Check type of each argument against the function's prototypes
+    
     // Build the function call AST node.
     // Store the function's return type as this node's type.
     // Also record the function's symbol-id
@@ -183,7 +216,7 @@ static struct ASTnode* primary(void) {
     return (n);
 }
 
-// Parse a primary factor and return an AST node representing it.
+// Parse a prefix factor and return an AST node representing it.
 static struct ASTnode* prefix(void) {
     struct ASTnode *tree = NULL;
 
@@ -267,7 +300,7 @@ struct ASTnode* binexpr(int ptp) {
 
     // If no tokens left, return into a node type
     tokentype = Token.token;
-    if (tokentype == T_SEMI || tokentype == T_RPAREN || tokentype == T_RBRACKET) {
+    if (tokentype == T_COMMA || tokentype == T_SEMI || tokentype == T_RPAREN || tokentype == T_RBRACKET) {
       left->rvalue = 1;
         return (left);
     }

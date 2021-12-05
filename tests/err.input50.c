@@ -1,1 +1,1 @@
-Incompatible type in binary expression on line 4
+Incompatible type in binary expression on line 6

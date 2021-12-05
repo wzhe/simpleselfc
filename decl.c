@@ -209,7 +209,7 @@ void global_declarations(void) {
 	// Only a function prototype
 	continue;
       }
-      if (Outdump) show(tree);
+      if (O_dumpAST) show(tree);
       genAST(tree, NOREG, 0);
       // Now free the 
       freelocalsym();

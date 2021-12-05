@@ -6,6 +6,10 @@
 #include <string.h>
 #include <ctype.h>
 
+#define ASCMD "as -o"
+#define LDCMD "cc -o"
+#define MAXOBJ 100
+
 // define struct and enum
 
 //#define Debug 0        // add flag in command line

@@ -104,3 +104,8 @@ void copyfuncparams(int slot) {
     addlocl(Symtable[id].name, Symtable[id].type, Symtable[id].stype, Symtable[id].clas, Symtable[id].size);
   }
 }
+
+void clear_symtable() {
+  Globs = 0;
+  Locls = NSYMBOLS - 1;
+}

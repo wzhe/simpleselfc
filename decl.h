@@ -62,6 +62,7 @@ int addlocl(char *name, int type, int stype, int clas, int size);
 int findsym(char *s);
 void copyfuncparams(int slot);
 void freelocalsym();
+void clear_symtable();
 
 // decl.c
 int parse_type(void);

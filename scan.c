@@ -342,7 +342,7 @@ int scan(struct token *t) {
             }
     }
     // Debug: Print what we are about to do
-    if (Outdump) showtoken(t);
+    if (O_dumpAST) showtoken(t);
     // We found a token
     return (1);
 }

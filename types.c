@@ -29,7 +29,7 @@ struct ASTnode* modify_type(struct ASTnode *tree, int rtype, int op) {
     int lsize, rsize;
 
     ltype = tree->type;;
-    if (Outdump)
+    if (O_dumpAST)
         printf("comp type: %s, %s\n", typestr(ltype), typestr(rtype));
 
     // Compare scalar int types

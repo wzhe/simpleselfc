@@ -1,6 +1,7 @@
 #include "defs.h"
 #include "data.h"
 #include "decl.h"
+#include <unistd.h>
 
 void match(int t, char *what) {
     if (Token.token == t) {
@@ -33,6 +34,8 @@ void rparen(void) {
 
 void fatal(char *s){
     fprintf(stderr, "%s on line %d\n", s, Line);
+    fclose(Outfile);
+    unlink(Outfilename);
     exit(1);
 }
 void fatals(char *s1, char *s2){

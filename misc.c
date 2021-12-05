@@ -153,8 +153,8 @@ char* typestr(int type) {
   case P_CHAR: return "char";
   case P_INT: return "int";
   case P_LONG: return "long";
-    default:
-      return "Unknown type";
+  default:
+    return "Unknown type";
   }
   return "";
 }

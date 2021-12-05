@@ -14,17 +14,6 @@ static char *breglist[] =
 static char *dreglist[] =
   {"%r10d", "%r11d", "%r12d", "%r13d", "%r9d", "%r8d", "%ecx", "%edx", "%esi", "%edi" };
 
-static int psize[] = {
-		      0,  // P_NONE,
-		      0,  // P_VOID,
-		      1,  // P_CHAR,
-		      4,  // P_INT,
-		      8,  // P_LONG,
-		      8,  // P_CHARPTR
-		      8,  // P_INTPTR
-		      8,  // P_LONGPTR
-};
-
 // Position of next local variable relative to stack base pointer.
 // We store the offset as positive to make aligning the stack pointer easier
 static int localOffset;
@@ -41,14 +30,13 @@ static int alloc_register(void) {
       return (i);
     }
   }
-  fprintf(stderr, "Out of registers!\n");
-  exit(1);
+  fatal("Out of registers!\n");
+  return (NOREG);
 }
 
 static void free_register(int reg) {
   if (freereg[reg] != 0) {
-    fprintf(stderr, "Error trying to free register %d!\n", reg);
-    exit(1);
+    fatald("Error trying to free register %d!\n", reg);
   }
   freereg[reg] = 1;
 }
@@ -63,9 +51,15 @@ static int cggetlocaloffset(int type) {
 }
 
 int cgprimsize(int type) {
-  if (type < P_NONE || type > P_LONGPTR)
-    fatald("Bad type in cgprimsize()", type);
-  return (psize[type]);
+  if (ptrtype(type)) return (8);
+  switch(type) {
+  case P_CHAR: return 1;
+  case P_INT: return 4;
+  case P_LONG: return 8;
+  default:
+    fatald("Unknow type in cgprimsize:", type);
+  }
+  return (0);
 }
 
 void freeall_registers(void)
@@ -200,17 +194,15 @@ void cgglobsym(int id) {
 }
 
 int cgstorglob(int r, int id) {
-  switch(Symtable[id].type){
-  case P_CHAR:
+  int size = cgprimsize(Symtable[id].type);
+  switch(size){
+  case 1:
     fprintf(Outfile, "\tmovb\t%s, %s(%%rip)\n", breglist[r], Symtable[id].name);
     break;
-  case P_INT:
+  case 4:
     fprintf(Outfile, "\tmovl\t%s, %s(%%rip)\n", dreglist[r], Symtable[id].name);
     break;
-  case P_LONG:
-  case P_CHARPTR:
-  case P_INTPTR:
-  case P_LONGPTR:
+  case 8:
     fprintf(Outfile, "\tmovq\t%s, %s(%%rip)\n", reglist[r], Symtable[id].name);
     break;
   default:
@@ -219,17 +211,15 @@ int cgstorglob(int r, int id) {
   return (r);
 }
 int cgstorlocal(int r, int id) {
-  switch(Symtable[id].type){
-  case P_CHAR:
+  int size = cgprimsize(Symtable[id].type);
+  switch(size){
+  case 1:
     fprintf(Outfile, "\tmovb\t%s, %d(%%rbp)\n", breglist[r], Symtable[id].posn);
     break;
-  case P_INT:
+  case 4:
     fprintf(Outfile, "\tmovl\t%s, %d(%%rbp)\n", dreglist[r], Symtable[id].posn);
     break;
-  case P_LONG:
-  case P_CHARPTR:
-  case P_INTPTR:
-  case P_LONGPTR:
+  case 8:
     fprintf(Outfile, "\tmovq\t%s, %d(%%rbp)\n", reglist[r], Symtable[id].posn);
     break;
   default:
@@ -255,14 +245,15 @@ int cgcall(int id, int numargs) {
   return (outr);
 }
 void cgreturn(int r, int id){
-  switch(Symtable[id].type){
-  case P_CHAR:
+  int size = cgprimsize(Symtable[id].type);
+  switch(size){
+  case 1:
     fprintf(Outfile, "\tmovzbl\t%s, %%eax\n", breglist[r]);
     break;
-  case P_INT:
+  case 4:
     fprintf(Outfile, "\tmovl\t%s, %%eax\n", dreglist[r]);
     break;
-  case P_LONG:
+  case 8:
     fprintf(Outfile, "\tmovq\t%s, %%eax\n", reglist[r]);
     break;
   default:
@@ -406,12 +397,14 @@ int cgaddress(int id) {
 // Dereference a pointer to get the value it
 // pointing at into the same register
 int cgderef(int r, int type){
-  switch(type) {
-  case P_CHARPTR:
+  int newtype = value_at(type);
+  int size = cgprimsize(newtype);
+  switch(size) {
+  case 1:
     fprintf(Outfile, "\tmovzbq\t(%s), %s\n", reglist[r], reglist[r]);
     break;
-  case P_INTPTR:
-  case P_LONGPTR:
+  case 4:
+  case 8:
     fprintf(Outfile, "\tmovq\t(%s), %s\n", reglist[r], reglist[r]);
     break;
   }
@@ -524,9 +517,10 @@ int cgloadglob(int id, int op) {
   // Get a new register
   int r = alloc_register();
 
+  int size = cgprimsize(Symtable[id].type);
   // Print out the code to initialise it
-  switch (Symtable[id].type) {
-  case P_CHAR:
+  switch(size){
+  case 1:
     if (op == A_PREINC)
       fprintf(Outfile, "\tincb\t%s(%%rip)\n", Symtable[id].name);
     if (op == A_PREDEC)
@@ -537,7 +531,7 @@ int cgloadglob(int id, int op) {
     if (op == A_POSTDEC)
       fprintf(Outfile, "\tdecb\t%s(%%rip)\n", Symtable[id].name);
     break;
-  case P_INT:
+  case 4:
     if (op == A_PREINC)
       fprintf(Outfile, "\tincl\t%s(%%rip)\n", Symtable[id].name);
     if (op == A_PREDEC)
@@ -548,10 +542,7 @@ int cgloadglob(int id, int op) {
     if (op == A_POSTDEC)
       fprintf(Outfile, "\tdecl\t%s(%%rip)\n", Symtable[id].name);
     break;
-  case P_LONG:
-  case P_CHARPTR:
-  case P_INTPTR:
-  case P_LONGPTR:
+  case 8:
     if (op == A_PREINC)
       fprintf(Outfile, "\tincq\t%s(%%rip)\n", Symtable[id].name);
     if (op == A_PREDEC)
@@ -572,9 +563,10 @@ int cgloadlocal(int id, int op) {
   // Get a new register
   int r = alloc_register();
 
+  int size = cgprimsize(Symtable[id].type);
   // Print out the code to initialise it
-  switch (Symtable[id].type) {
-  case P_CHAR:
+  switch(size){
+  case 1:
     if (op == A_PREINC)
       fprintf(Outfile, "\tincb\t%d(%%rbp)\n", Symtable[id].posn);
     if (op == A_PREDEC)
@@ -585,7 +577,7 @@ int cgloadlocal(int id, int op) {
     if (op == A_POSTDEC)
       fprintf(Outfile, "\tdecb\t%d(%%rbp)\n", Symtable[id].posn);
     break;
-  case P_INT:
+  case 4:
     if (op == A_PREINC)
       fprintf(Outfile, "\tincl\t%d(%%rbp)\n", Symtable[id].posn);
     if (op == A_PREDEC)
@@ -596,10 +588,7 @@ int cgloadlocal(int id, int op) {
     if (op == A_POSTDEC)
       fprintf(Outfile, "\tdecl\t%d(%%rbp)\n", Symtable[id].posn);
     break;
-  case P_LONG:
-  case P_CHARPTR:
-  case P_INTPTR:
-  case P_LONGPTR:
+  case 8:
     if (op == A_PREINC)
       fprintf(Outfile, "\tincq\t%d(%%rbp)\n", Symtable[id].posn);
     if (op == A_PREDEC)

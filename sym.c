@@ -3,7 +3,7 @@
 #include "decl.h"
 
 
-static void updatesym(int slot, char *name, int type, int stype, int clas, int label, int size, int posn) {
+static void updatesym(int slot, char *name, int type, int stype, int clas, int labelorsize, int posn) {
   if (slot < 0 || slot >= NSYMBOLS)
     fatald("Invalid symbol slot number in updatesym()", slot);
 
@@ -13,8 +13,7 @@ static void updatesym(int slot, char *name, int type, int stype, int clas, int l
   Symtable[slot].type = type;
   Symtable[slot].stype = stype;
   Symtable[slot].clas = clas;
-  Symtable[slot].endlabel = label;
-  Symtable[slot].size = size;
+  Symtable[slot].endlabel = labelorsize;
   Symtable[slot].posn = posn;
 }
 
@@ -62,7 +61,7 @@ static int newlocl(void) {
   return (p);
 }
 
-int addglob(char *name, int type, int stype, int clas, int label, int size) {
+int addglob(char *name, int type, int stype, int clas, int size) {
   int slot;
 
   if ((slot = findglob(name)) != -1) {
@@ -70,7 +69,7 @@ int addglob(char *name, int type, int stype, int clas, int label, int size) {
   }
 
   slot = newglob();
-  updatesym(slot,name, type, stype, clas, label, size, 0);
+  updatesym(slot,name, type, stype, clas, size, 0);
   if (clas == C_GLOBAL) genglobsym(slot);
 
   return (slot);
@@ -87,7 +86,7 @@ int addlocl(char *name, int type, int stype, int clas, int size) {
   }
 
   localslot = newlocl();
-  updatesym(localslot, name, type, stype, clas, 0, size, 0);
+  updatesym(localslot, name, type, stype, clas, size, 0);
   return (localslot);
 }
 

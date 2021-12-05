@@ -198,7 +198,7 @@ static struct ASTnode* primary(void) {
             // For a STRLIT token, generate the assembly for it.
             // Then make a leaf AST node for it. id is the string's label
             id = genglobstr(Text);
-            n = mkastleaf(A_STRLIT, id, P_CHARPTR);
+            n = mkastleaf(A_STRLIT, id, pointer_to(P_CHAR));
             break;
         case T_IDENT:
             return (postfix());

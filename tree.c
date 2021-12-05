@@ -9,8 +9,7 @@ struct ASTnode* mkastnode(int op, struct ASTnode *left, struct ASTnode* mid,
 
   n = (struct ASTnode*) malloc(sizeof(struct ASTnode));
   if (n == NULL) {
-    fprintf(stderr, "Unable to malloc in mkastnode()\n");
-    exit(1);
+    fatal("Unable to malloc in mkastnode()\n");
   }
 
   n->op = op;
@@ -19,7 +18,7 @@ struct ASTnode* mkastnode(int op, struct ASTnode *left, struct ASTnode* mid,
   n->left = left;
   n->mid = mid;
   n->right = right;
-  n->v.intvalue = intvalue;
+  n->intvalue = intvalue;
   return (n);
 
 }
@@ -53,17 +52,17 @@ void shownode(struct ASTnode* node,
 
   printf("%s", asttypestr(node->op));
   if (node->op == A_INTLIT) {
-    printf(" v:%d", node->v.intvalue);
+    printf(" v:%d", node->intvalue);
   }
   else if (node->op == A_SCALE) {
-    printf(" size:%d", node->v.size);
+    printf(" size:%d", node->size);
   } else if (node->op == A_IDENT
 	     || node->op == A_FUNCTION
 	     || node->op == A_FUNCCALL
 	     || node->op == A_ADDR
 	     ) {
-    printf(" name:%s", Symtable[node->v.id].name);
-    printf(" clas:%d", Symtable[node->v.id].clas);
+    printf(" name:%s", Symtable[node->id].name);
+    printf(" clas:%d", Symtable[node->id].clas);
   }
   printf(" type:%s", typestr(node->type));
   printf(" %s", node->rvalue ? "rvalue" : "lvalue");

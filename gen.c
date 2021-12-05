@@ -102,14 +102,14 @@ int gen_funccall(struct ASTnode *n) {
   while(gluetree) {
     // Calculate the expression's value.
     reg = genAST(gluetree->right, NOLABEL, gluetree->op);
-    cgcopyarg(reg, gluetree->v.size); 
+    cgcopyarg(reg, gluetree->size); 
     // Keep the first (highest) number of arguments
-    if (numargs == 0) numargs = gluetree->v.size;
+    if (numargs == 0) numargs = gluetree->size;
     genfreeregs();
     gluetree = gluetree->left;
   }
   // Call the function, clean up the stack(based on numargs)
-  return (cgcall(n->v.id, numargs));
+  return (cgcall(n->id, numargs));
 }
 
 // Given an AST, the register (if any) that holds
@@ -123,9 +123,9 @@ int genAST(struct ASTnode *n, int label, int parentASTop){
   case A_IF: return (genIFAST(n));
   case A_WHILE: return (genWHILEAST(n));
   case A_FUNCTION:
-    cgfuncpreamble(n->v.id);
+    cgfuncpreamble(n->id);
     genAST(n->left, NOLABEL, n->op);
-    cgfuncpostamble(n->v.id);
+    cgfuncpostamble(n->id);
     return (NOREG);
   case A_FUNCCALL:
     return (gen_funccall(n));
@@ -168,18 +168,18 @@ int genAST(struct ASTnode *n, int label, int parentASTop){
   case A_POSTDEC:
     // Load the variable's value into a registre,
     // then increment it
-      if (Symtable[n->v.id].clas == C_GLOBAL) {
-	return (cgloadglob(n->v.id, n->op));
+      if (Symtable[n->id].clas == C_GLOBAL) {
+	return (cgloadglob(n->id, n->op));
       } else {
-	return (cgloadlocal(n->v.id, n->op));
+	return (cgloadlocal(n->id, n->op));
       }
   case A_PREINC:
   case A_PREDEC:
     // Load and increment the variable's value into a registre,
-      if (Symtable[n->left->v.id].clas == C_GLOBAL) {
-	return (cgloadglob(n->left->v.id, n->op));
+      if (Symtable[n->left->id].clas == C_GLOBAL) {
+	return (cgloadglob(n->left->id, n->op));
       } else {
-	return (cgloadlocal(n->left->v.id, n->op));
+	return (cgloadlocal(n->left->id, n->op));
       }
   case A_NEGATE:
     return (cgnegate(leftreg));
@@ -193,17 +193,17 @@ int genAST(struct ASTnode *n, int label, int parentASTop){
     // to 0 or 1 based on it's zeroeness or non-zeroeness
     return (cgboolean(leftreg, parentASTop, label));
 
-  case A_INTLIT: return (cgloadint(n->v.intvalue));
+  case A_INTLIT: return (cgloadint(n->intvalue));
   case A_STRLIT:
-    return (cgloadglobstr(n->v.id));
+    return (cgloadglobstr(n->id));
   case A_IDENT:
     // Load our value if we are an rvalue
     // or we are being dereferenced
     if (n->rvalue || parentASTop == A_DEREF) {
-      if (Symtable[n->v.id].clas == C_GLOBAL) {
-	return (cgloadglob(n->v.id, n->op));
+      if (Symtable[n->id].clas == C_GLOBAL) {
+	return (cgloadglob(n->id, n->op));
       } else {
-	return (cgloadlocal(n->v.id, n->op));
+	return (cgloadlocal(n->id, n->op));
       }
     } else
       return (NOREG);
@@ -218,10 +218,10 @@ int genAST(struct ASTnode *n, int label, int parentASTop){
     // Are we assigning to an identifier or through a pointer?
     switch (n->right->op) {
     case A_IDENT:
-      if (Symtable[n->right->v.id].clas == C_GLOBAL) {
-	return (cgstorglob(leftreg, n->right->v.id));
+      if (Symtable[n->right->id].clas == C_GLOBAL) {
+	return (cgstorglob(leftreg, n->right->id));
       } else {
-	return (cgstorlocal(leftreg, n->right->v.id));
+	return (cgstorlocal(leftreg, n->right->id));
       }
     case A_DEREF: return (cgstorderef(leftreg, rightreg, n->right->type));
     default:  fatald("Can't A_SSIGN in genAST, op", n->op);
@@ -231,21 +231,21 @@ int genAST(struct ASTnode *n, int label, int parentASTop){
     cgreturn(leftreg, Functionid);
     return (NOREG);
   case A_ADDR:
-    return (cgaddress(n->v.id));
+    return (cgaddress(n->id));
   case A_WIDEN:
     // Widen the child's type to the parent's type
     return (cgwiden(leftreg, n->left->type, n->type));
   case A_SCALE:
     // Small optimisation: user shift if the
     // scale value is a known power of two
-    switch (n->v.size) {
+    switch (n->size) {
     case 2: return (cgshlconst(leftreg, 1));
     case 4: return (cgshlconst(leftreg, 2));
     case 8: return (cgshlconst(leftreg, 3));
     default:
       // Load a register with the size and
       // multiply the leftreg by this size
-      rightreg = cgloadint(n->v.size);
+      rightreg = cgloadint(n->size);
       return (cgmul(leftreg, rightreg));
     }
     break;

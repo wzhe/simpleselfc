@@ -61,7 +61,7 @@ static int newlocl(void) {
   return (p);
 }
 
-int addglob(char *name, int type, int stype, int label, int size) {
+int addglob(char *name, int type, int stype, int clas, int label, int size) {
   int slot;
 
   if ((slot = findglob(name)) != -1) {
@@ -69,33 +69,32 @@ int addglob(char *name, int type, int stype, int label, int size) {
   }
 
   slot = newglob();
-  updatesym(slot,name, type, stype, C_GLOBAL, label, size, 0);
-  genglobsym(slot);
+  updatesym(slot,name, type, stype, clas, label, size, 0);
+  if (clas == C_GLOBAL) genglobsym(slot);
 
   return (slot);
 }
 
 // Add a local symbol to the symbol table. Set up its:
-// +type: char, int etc.
-// +structurl type: var, function, array etc.
-// +size: number of elements
-// +endlabel: if this is a function
 // Return the slot number in the symbol table
-int addlocl(char *name, int type, int stype, int isparam, int size) {
-  int localslot, globalslot;
+int addlocl(char *name, int type, int stype, int clas, int size) {
+  int localslot;
 
   if ((localslot = findglob(name)) != -1) {
     return localslot;
   }
 
   localslot = newlocl();
-  if (isparam) {
-    updatesym(localslot, name, type, stype, C_PARAM, 0, size, 0);
-    globalslot = newglob();
-    updatesym(globalslot, name, type, stype, C_LOCAL, 0, size, 0);
-  } else {
-    updatesym(localslot, name, type, stype, C_LOCAL, 0, size, 0);
-  }
+  updatesym(localslot, name, type, stype, C_LOCAL, clas, size, 0);
   return (localslot);
 }
 
+
+// Given a function's slot number, copy the global parameters
+// from its prototype to be local parameters
+void copyfuncparams(int slot) {
+  int i, id = slot + 1;
+  for (i = 0; i < Symtable[slot].nelems; i++, id++) {
+    addlocl(Symtable[id].name, Symtable[id].type, Symtable[id].stype, Symtable[id].clas, Symtable[id].size);
+  }
+}

@@ -208,7 +208,7 @@ struct ASTnode* single_statement(void) {
         case T_LONG:
             type = parse_type();
             ident();
-            var_declaration(type, 1, 0);
+            var_declaration(type, C_LOCAL);
 	    semi();
             return (NULL);            // No AST generated here
             // case T_IDENT:

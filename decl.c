@@ -40,9 +40,18 @@ int parse_type(void) {
 //                  | varible_declaration ',' varible_declaration
 // Parse the parameters in parenthese after the function name.
 // Add them as a symbols to the symbol table and return the number of parameters
-static int param_declaration(void) {
-  int type;
+static int param_declaration(int id) {
+  int type, param_id;
+  int orig_paramcnt;
   int paramcnt = 0;
+
+  // Add 1 to id so that it's either zero (no prototype), or
+  // it's the position of the zeroth existing parameter in the symbol table
+  param_id = id + 1;
+
+  // Get any existing prototype parameter count
+  if (param_id)
+    orig_paramcnt = Symtable[id].nelems;
 
   // Loop until the final right parenthese
   while (Token.token != T_RPAREN) {
@@ -50,7 +59,18 @@ static int param_declaration(void) {
     // and add it to the symbol table
     type = parse_type();
     ident();
-    var_declaration(type, 1, 1);
+
+    // We have an existing prototype.
+    // Check that this type matches the prototype.
+    if (param_id) {
+      if (type != Symtable[id].type)
+	fatald("Type doesn't match prototype for parameter", orig_paramcnt + 1);
+      param_id++;
+    } else {
+      // Add a new parmeter to the new prototype
+      var_declaration(type, C_PARAM);
+    }
+
     paramcnt++;
 
     // Must have a ',' or ')' at this point
@@ -61,20 +81,26 @@ static int param_declaration(void) {
       fatals("Unexpected token in parameter list", tokenstr(Token.token));
     }
   }
+  // Check that the number of parameters in this list matches
+  // any existing prototype
+  if ((id != -1) && (paramcnt != orig_paramcnt))
+    fatals("Parameter count mismatch for function", Symtable[id].name);
   return paramcnt;
 }
 
-void var_declaration(int type, int islocal, int isparam){
+void var_declaration(int type, int clas){
 
   if (Token.token == T_LBRACKET) {
     // Skip the '['
     scan(&Token);
 
     if (Token.token == T_INTLIT) {
-      if (islocal) {
-	addlocl(Text, pointer_to(type), S_ARRAY, isparam, Token.intvalue);
+      // Add this as a know array and generate its space in assembly.
+      // We treat the array as a pointer to its element's type
+      if (clas == C_LOCAL) {
+	fatal("For now, declaration of local arrays is no implemented");
       } else {
-	addglob(Text, pointer_to(type), S_ARRAY, 0, Token.intvalue);
+	addglob(Text, pointer_to(type), S_ARRAY, clas, 0, Token.intvalue);
       }
       scan(&Token);
       match(T_RBRACKET, "]");
@@ -82,10 +108,13 @@ void var_declaration(int type, int islocal, int isparam){
       fatal("Missing arrary size.");
     } 
   } else {
-    if (islocal) {
-      addlocl(Text, type, S_VARIABLE, isparam, 1);
+    // Add this as a known scalar
+    // and generate its space in assembly
+    if (clas == C_LOCAL) {
+      if (addlocl(Text, type, S_VARIABLE, clas, 1) == -1)
+	fatals("Dumplicate local variable declaration", Text);
     } else {
-      addglob(Text, type, S_VARIABLE, 0, 1);
+      addglob(Text, type, S_VARIABLE, clas, 0, 1);
     }
   }
 }
@@ -96,18 +125,46 @@ struct ASTnode* function_declaration(int type){
   int nameslot;
   int endlabel;
   int paramcnt;
+  int id;
 
-  // Get a label-id for the end label
-  endlabel = genlabel();
-  // Add the function to the symbol table
-  nameslot = addglob(Text, type, S_FUNCTION, endlabel, 0);
-  Functionid = nameslot;
+  // Text has the identifier's name. If this exist and is a function,
+  // get the id. Otherwise, set id to -1
+  if ((id = findsym(Text)) != -1) {
+    if (Symtable[id].stype != S_FUNCTION)
+      id = -1;
+  }
+
+  // If this is a new function declaration, 
+  // get a label-id for the end label, and add the function
+  // to the symbol table
+  if (id == -1) {
+    endlabel = genlabel();
+    // Add the function to the symbol table
+    nameslot = addglob(Text, type, S_FUNCTION, C_GLOBAL, endlabel, 0);
+  }
 
   lparen();
-  paramcnt = param_declaration();
-  Symtable[nameslot].nelems = paramcnt;
+  paramcnt = param_declaration(id);
   rparen();
 
+  // If this is a new function declaration, update the function
+  // symbol entry with the number of parameters
+  if (id == -1)
+    Symtable[nameslot].nelems = paramcnt;
+
+  if (Token.token == T_SEMI) {
+    scan(&Token);
+    return (NULL);
+  }
+  
+  // This is not just a prototype.
+  // Copy the global parameters to be local parameters
+  if (id == -1)
+    id = nameslot;
+
+  copyfuncparams(id);
+
+  Functionid = nameslot;
   // Get the AST tree for the compound statement
   tree = compound_statement();
 
@@ -149,7 +206,7 @@ void global_declarations(void) {
       if (Outdump) show(tree);
       genAST(tree, NOREG, 0);
     } else {
-      var_declaration(type, 0, 0);
+      var_declaration(type, C_GLOBAL);
       semi();
     }
 

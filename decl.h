@@ -57,13 +57,14 @@ char* typestr(int type);
 // sym.c
 int findglob(char *s);
 int findlocl(char *s);
-int addglob(char *name, int type, int stype, int label, int size);
-int addlocl(char *name, int type, int stype, int label, int size);
+int addglob(char *name, int type, int stype, int clas, int label, int size);
+int addlocl(char *name, int type, int stype, int clas, int size);
 int findsym(char *s);
+void copyfuncparams(int slot);
 
 // decl.c
 int parse_type(void);
-void var_declaration(int type, int islocal, int isparam);
+void var_declaration(int type, int clas);
 struct ASTnode* function_declaration(int type);
 void global_declarations(void);
 

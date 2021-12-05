@@ -23,8 +23,8 @@ do if [ ! -f "out.$i" -a ! -f "err.$i" ]
 	else if [ -f "err.$i" ]
 	     then
 		 echo -n $i
-		 $TARGET -o out $i 2> "trial.$i"
-		 cmp -s "err.$i" "trial.$i"
+		 $TARGET -o out $i 2> "trail.$i"
+		 cmp -s "err.$i" "trail.$i"
 		 if [ "$?" -eq "1" ]
 		 then echo ": failed"
 		      diff -c "err.$i" "trial.$i"

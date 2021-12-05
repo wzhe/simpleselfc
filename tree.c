@@ -9,8 +9,7 @@ struct ASTnode* mkastnode(int op, struct ASTnode *left, struct ASTnode* mid,
 
   n = (struct ASTnode*) malloc(sizeof(struct ASTnode));
   if (n == NULL) {
-    fprintf(stderr, "Unable to malloc in mkastnode()\n");
-    exit(1);
+    fatal("Unable to malloc in mkastnode()\n");
   }
 
   n->op = op;

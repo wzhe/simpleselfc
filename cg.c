@@ -41,14 +41,13 @@ static int alloc_register(void) {
       return (i);
     }
   }
-  fprintf(stderr, "Out of registers!\n");
-  exit(1);
+  fatal("Out of registers!\n");
+  return (NOREG);
 }
 
 static void free_register(int reg) {
   if (freereg[reg] != 0) {
-    fprintf(stderr, "Error trying to free register %d!\n", reg);
-    exit(1);
+    fatald("Error trying to free register %d!\n", reg);
   }
   freereg[reg] = 1;
 }

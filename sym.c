@@ -81,8 +81,9 @@ int addglob(char *name, int type, int stype, int clas, int label, int size) {
 int addlocl(char *name, int type, int stype, int clas, int size) {
   int localslot;
 
-  if ((localslot = findglob(name)) != -1) {
-    return localslot;
+  // If this is already in the symbol table, return an error
+  if ((localslot = findlocl(name)) != -1) {
+    return (-1);
   }
 
   localslot = newlocl();

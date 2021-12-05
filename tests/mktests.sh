@@ -1,10 +1,20 @@
 #!/usr/bin/env bash
 
-for i in input*
-do if [ ! -f "out.$i" ]
+if [ ! -f ../comp1 ]
+then (cd ..; mke)
+fi
+
+for i in input*c
+do if [ ! -f "out.$i" -a ! -f "err.$i" ]
    then
-       cc -o out $i ../lib/printint.c
-       ./out > out.$i
-       rm -f out
+       echo -n $i
+       ../comp1 $i  2> "err.$i"
+       if [ ! -s "err.$i" ]
+       then
+	   rm -f "err.$i"
+	   cc -o out $i ../lib/printint.c
+	   ./out > "out.$i"
+       fi
    fi
+   rm -f out out.s
 done

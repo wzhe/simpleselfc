@@ -165,19 +165,22 @@ int genAST(struct ASTnode *n, int label, int parentASTop){
   case A_LSHIFT: return (cgshl(leftreg, rightreg));
   case A_RSHIFT: return (cgshr(leftreg, rightreg));
   case A_POSTINC:
-    // Load the variable's value into a registre,
-    // then increment it
-    return (cgloadglob(n->v.id, n->op));
   case A_POSTDEC:
     // Load the variable's value into a registre,
     // then increment it
-    return (cgloadglob(n->v.id, n->op));
+      if (Symtable[n->v.id].clas == C_GLOBAL) {
+	return (cgloadglob(n->v.id, n->op));
+      } else {
+	return (cgloadlocal(n->v.id, n->op));
+      }
   case A_PREINC:
-    // Load and increment the variable's value into a registre,
-    return (cgloadglob(n->left->v.id, n->op));
   case A_PREDEC:
     // Load and increment the variable's value into a registre,
-    return (cgloadglob(n->left->v.id, n->op));
+      if (Symtable[n->left->v.id].clas == C_GLOBAL) {
+	return (cgloadglob(n->left->v.id, n->op));
+      } else {
+	return (cgloadlocal(n->left->v.id, n->op));
+      }
   case A_NEGATE:
     return (cgnegate(leftreg));
   case A_INVERT:

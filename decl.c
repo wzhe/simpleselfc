@@ -64,7 +64,7 @@ static int param_declaration(int id) {
     // Check that this type matches the prototype.
     if (param_id) {
       if (type != Symtable[id].type)
-	fatald("Type doesn't match prototype for parameter", orig_paramcnt + 1);
+	fatald("Type doesn't match prototype for parameter", paramcnt + 1);
       param_id++;
     } else {
       // Add a new parmeter to the new prototype
@@ -98,7 +98,7 @@ void var_declaration(int type, int clas){
       // Add this as a know array and generate its space in assembly.
       // We treat the array as a pointer to its element's type
       if (clas == C_LOCAL) {
-	fatal("For now, declaration of local arrays is no implemented");
+	fatal("For now, declaration of local arrays is not implemented");
       } else {
 	addglob(Text, pointer_to(type), S_ARRAY, clas, 0, Token.intvalue);
       }
@@ -112,7 +112,7 @@ void var_declaration(int type, int clas){
     // and generate its space in assembly
     if (clas == C_LOCAL) {
       if (addlocl(Text, type, S_VARIABLE, clas, 1) == -1)
-	fatals("Dumplicate local variable declaration", Text);
+	fatals("Duplicate local variable declaration", Text);
     } else {
       addglob(Text, type, S_VARIABLE, clas, 0, 1);
     }
@@ -173,15 +173,15 @@ struct ASTnode* function_declaration(int type){
   // If the function type isn't P_VOID, check that the last
   // AST operation in the compound statement was a return statement
   if (type != P_VOID) {
-    // Error if no statemets in the function
+    // Error if no statements in the function
     if (tree == NULL)
-      fatal("No statemets in function with non-void type");
+      fatal("No statements in function with non-void type");
 
     // Check that the last AST operation in the compound statement
     // wa a return statement.
     finalstmt = (tree->op == A_GLUE) ? tree->right : tree;
     if (finalstmt == NULL || finalstmt->op != A_RETURN)
-      fatals("No return for unction with non-void type", Symtable[Functionid].name);
+      fatals("No return for function with non-void type", Symtable[Functionid].name);
   }
 
   // Return an A_FUNCTION node which has the function's nameslot

@@ -7,7 +7,8 @@ static void updatesym(int slot, char *name, int type, int stype, int clas, int l
   if (slot < 0 || slot >= NSYMBOLS)
     fatald("Invalid symbol slot number in updatesym()", slot);
 
-  //if (Symtable[slot]) free(Symtable[slot]);
+  if (Symtable[slot].name != NULL) free(Symtable[slot].name);
+
   Symtable[slot].name = strdup(name);
   Symtable[slot].type = type;
   Symtable[slot].stype = stype;
@@ -85,10 +86,14 @@ int addlocl(char *name, int type, int stype, int clas, int size) {
   }
 
   localslot = newlocl();
-  updatesym(localslot, name, type, stype, C_LOCAL, clas, size, 0);
+  updatesym(localslot, name, type, stype, clas, 0, size, 0);
   return (localslot);
 }
 
+
+void freelocalsym(){
+  Locls = NSYMBOLS - 1;
+}
 
 // Given a function's slot number, copy the global parameters
 // from its prototype to be local parameters

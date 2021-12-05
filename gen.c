@@ -127,13 +127,13 @@ int genAST(struct ASTnode *n, int label, int parentASTop){
     genAST(n->left, NOLABEL, n->op);
     cgfuncpostamble(n->v.id);
     return (NOREG);
+  case A_FUNCCALL:
+    return (gen_funccall(n));
   case A_GLUE:
     // Do each child statement, and free the
     // registers after each child.
-    if (n->left) {
-      genAST(n->left, NOLABEL, n->op);
-      genfreeregs();
-    }
+    genAST(n->left, NOLABEL, n->op);
+    genfreeregs();
     genAST(n->right, NOLABEL, n->op);
     genfreeregs();
     return (NOREG);
@@ -227,8 +227,6 @@ int genAST(struct ASTnode *n, int label, int parentASTop){
   case A_RETURN:
     cgreturn(leftreg, Functionid);
     return (NOREG);
-  case A_FUNCCALL:
-    return (gen_funccall(n));
   case A_ADDR:
     return (cgaddress(n->v.id));
   case A_WIDEN:

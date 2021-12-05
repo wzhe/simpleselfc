@@ -61,6 +61,7 @@ int addglob(char *name, int type, int stype, int clas, int label, int size);
 int addlocl(char *name, int type, int stype, int clas, int size);
 int findsym(char *s);
 void copyfuncparams(int slot);
+void freelocalsym();
 
 // decl.c
 int parse_type(void);

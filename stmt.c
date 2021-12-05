@@ -193,7 +193,7 @@ static struct ASTnode* return_statement(){
     tree = modify_type(tree, Symtable[Functionid].type, 0);
     if (tree == NULL) fatal("Incompatible type in return");
 
-    tree = mkastunary(A_RETURN, tree, 0, P_NONE);
+    tree = mkastunary(A_RETURN, tree, 0, P_VOID);
 
     rparen();
     return (tree);

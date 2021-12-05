@@ -159,7 +159,7 @@ void cgfuncpreamble(int id) {
 void cgfuncpostamble(int id) {
   cglabel(Symtable[id].endlabel);
   fprintf(Outfile, "\taddq\t$%d, %%rsp\n", stackOffset);
-  fputs("\tpopq  %rbp\n" "\tret\n", Outfile);
+  fputs("\tpopq\t%rbp\n" "\tret\n", Outfile);
 }
 
 // Load an integer literal value into a register
@@ -614,10 +614,6 @@ int cgloadlocal(int id, int op) {
     fatald("Bad type in cgloadlocal:", Symtable[id].type);
   }
   return (r);
-}
-// Reset the position of new local variables when parsing a new function
-void cgresetlocals(void) {
-  localOffset = 0;
 }
 
 // Given a registre with an argument value,

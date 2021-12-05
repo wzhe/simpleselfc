@@ -161,10 +161,12 @@ struct ASTnode* function_declaration(int type){
   // Copy the global parameters to be local parameters
   if (id == -1)
     id = nameslot;
+  else
+    nameslot = id;
 
   copyfuncparams(id);
 
-  Functionid = nameslot;
+  Functionid = id;
   // Get the AST tree for the compound statement
   tree = compound_statement();
 
@@ -184,7 +186,7 @@ struct ASTnode* function_declaration(int type){
 
   // Return an A_FUNCTION node which has the function's nameslot
   // and the compound statement sub-tree
-  return mkastunary(A_FUNCTION, tree, nameslot, P_VOID);
+  return mkastunary(A_FUNCTION, tree, id, P_VOID);
 }
 
 // Parse one or more global declarations,
@@ -203,8 +205,14 @@ void global_declarations(void) {
 
     if (Token.token == T_LPAREN) {
       tree = function_declaration(type);
+      if (tree == NULL) {
+	// Only a function prototype
+	continue;
+      }
       if (Outdump) show(tree);
       genAST(tree, NOREG, 0);
+      // Now free the 
+      freelocalsym();
     } else {
       var_declaration(type, C_GLOBAL);
       semi();

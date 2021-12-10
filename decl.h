@@ -15,6 +15,8 @@ struct ASTnode* mkastleaf(int op, int intvale, int type);
 
 struct ASTnode* mkastunary(int op, struct ASTnode *left, int intvale, int type);
 
+void freeast(struct ASTnode* node);
+
 void show(struct ASTnode* tree);
 
 // expr.c

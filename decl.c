@@ -212,6 +212,7 @@ void global_declarations(void) {
       if (O_dumpAST) show(tree);
       genAST(tree, NOREG, 0);
       // Now free the 
+      freeast(tree);
       freelocalsym();
     } else {
       var_declaration(type, C_GLOBAL);

@@ -33,6 +33,15 @@ struct ASTnode* mkastunary(int op, struct ASTnode *left, int intvalue,int type) 
   return (mkastnode(op, left, NULL, NULL, intvalue, type));
 }
 
+void freeast(struct ASTnode* node) {
+  if (node == NULL) return;
+  freeast(node->left);
+  freeast(node->mid);
+  freeast(node->right);
+
+  free(node);
+}
+
 int havechild(struct ASTnode* tree) {
   return tree->left || tree->right || tree->mid;
 }

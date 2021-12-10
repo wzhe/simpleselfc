@@ -189,6 +189,9 @@ int main(int argc, char* argv[]) {
 	unlink(objlist[i]);
       }
     }
+    for (i = 0; objlist[i] != NULL; i++) {
+      free(objlist[i]);
+    }
   }
   return (0);
 }

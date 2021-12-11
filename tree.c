@@ -63,9 +63,6 @@ void shownode(struct ASTnode* node,
   printf("%s", asttypestr(node->op));
   if (node->op == A_INTLIT) {
     printf(" v:%d", node->intvalue);
-  }
-  else if (node->op == A_SCALE) {
-    printf(" size:%d", node->size);
   } else if (node->op == A_IDENT
 	     || node->op == A_FUNCTION
 	     || node->op == A_FUNCCALL
@@ -74,6 +71,7 @@ void shownode(struct ASTnode* node,
     printf(" name:%s", node->sym->name);
     printf(" clas:%d", node->sym->clas);
   }
+  printf(" size:%d", node->size);
   printf(" type:%s", typestr(node->type));
   printf(" %s", node->rvalue ? "rvalue" : "lvalue");
   printf("\n");

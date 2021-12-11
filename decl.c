@@ -4,8 +4,8 @@
 
 
 // param_declaration: <null>
-//                  | varible_declaration
-//                  | varible_declaration ',' varible_declaration
+//                  | variable_declaration
+//                  | variable_declaration ',' variable_declaration
 // Parse the parameters in parenthese after the function name.
 // Add them as a symbols to the symbol table and return the number of parameters
 static int param_declaration(struct symtable *funcsym) {
@@ -129,6 +129,10 @@ static struct symtable* struct_declaration(void) {
   m->posn = 0;
   offset = typesize(m->type, m->ctype);
   for (m = m->next; m != NULL; m = m->next) {
+    // Set the offset for this member
+    m->posn = genalign(m->type, offset, 1);
+
+    // Get the offest of the next free byte after this member
     offset += typesize(m->type, m->ctype);
   }
 

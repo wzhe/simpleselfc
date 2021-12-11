@@ -37,6 +37,8 @@ enum {
       T_INC, T_DEC, // ++,  --
       T_INVERT,     // ~
       T_LOGNOT,     // !
+      T_DOT,        // .
+      T_ARROW,      // ->
       // no precedence
       // Type keywords
       T_VOID, T_CHAR, T_INT, T_LONG,

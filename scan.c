@@ -238,6 +238,8 @@ int scan(struct token *t) {
         case '-':
             if ((c = next()) == '-') {
                 t->token = T_DEC;
+	    } else if (c == '>') {
+                t->token = T_ARROW;
             } else {
                 putback(c);
                 t->token = T_MINUS;
@@ -312,6 +314,9 @@ int scan(struct token *t) {
             break;
         case '~':
             t->token = T_INVERT;
+            break;
+        case '.':
+            t->token = T_DOT;
             break;
         case '\'':
             // If it's a quote, scan in the literal character value

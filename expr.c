@@ -148,6 +148,63 @@ static struct ASTnode* array_access(void) {
     return (left);
 }
 
+// Parse the member reference of a struct (or union, soon)
+// and return an AST tree for it. If withpointer is true,
+// the access is through a pointer to the member;
+// return an AST tree for it
+static struct ASTnode* member_access(int withpointer) {
+  struct ASTnode *left, *right;
+  struct symtable *compvar;
+  struct symtable *typeptr;
+  struct symtable *m;
+
+    // Check that the identifier has been declared as a struct
+    // (or a union), or a struct/union pointer
+    if ((compvar = findglob(Text)) == NULL) {
+        fatals("Undeclared variable", Text);
+    }
+    if (withpointer && compvar->type != pointer_to(P_STRUCT))
+      fatals("Undeclared variable",Text);
+
+    if (!withpointer && compvar->type != P_STRUCT)
+      fatals("Undeclared variable",Text);
+
+    // If a pointer to a struct, get the pointer's value.
+    // Otherwise, make a leaf node that points at the base
+    // Either way, it's an rvalue.
+    if (withpointer) {
+      left = mkastleaf(A_IDENT, compvar, 0, pointer_to(P_STRUCT));
+    } else {
+      left = mkastleaf(A_ADDR, compvar, 0, compvar->type);
+    }
+    left->rvalue = 1;
+
+    typeptr = compvar->ctype;
+
+    // Skip the '.' or '->' token and get the member's name
+    scan(&Token);
+    ident();
+
+    // Find the matching member's name in the type
+    // Die if we can't find it
+    for (m = typeptr->member; m != NULL; m = m->next) {
+      if (!strcmp(m->name, Text))
+	break;
+    }
+
+    if (m == NULL)
+      fatals("No member found in struct/union ", Text);
+
+    // Build an A_INTLIT node with the offset
+    right = mkastleaf(A_INTLIT, NULL, m->posn, P_INT);
+
+    // Add the member's offset to the base of the struct and
+    // dereferenct it. Still an lvalue at this point
+    left = mkastnode(A_ADD, left, NULL, right, NULL, 0, pointer_to(m->type));
+    left = mkastunary(A_DEREF, left, NULL, 0, m->type);
+    return (left);
+}
+
 // Parse a postfix expression and return an AST node resresenting it.
 // The identifier is already in Text.
 static struct ASTnode* postfix(void) {
@@ -164,6 +221,14 @@ static struct ASTnode* postfix(void) {
     // It's a '[', so an array reference
     if (Token.token == T_LBRACKET)
         return (array_access());
+
+    // It's a '.', so an struct member
+    if (Token.token == T_DOT)
+        return (member_access(0));
+
+    // It's a '->', so an struct member
+    if (Token.token == T_ARROW)
+        return (member_access(1));
 
     // A variable. Check that the variable exists.
     sym = findsym(Text);

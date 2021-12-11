@@ -57,7 +57,7 @@ int cgprimsize(int type) {
   case P_INT: return 4;
   case P_LONG: return 8;
   default:
-    fatald("Unknow type in cgprimsize:", type);
+    fatald("Unknow type in cgprimsize", type);
   }
   return (0);
 }
@@ -75,13 +75,8 @@ void cgpreamble(){
   freeall_registers();
 }
 
-// Print out the assembly postamble
+// Nothing to do
 void cgpostamble() {
-  fputs(
-	"\tmovl\t$0, %eax\n"
-	"\tpopq\t%rbp\n"
-	"\tret\n",
-	Outfile);
 }
 
 
@@ -168,7 +163,7 @@ int cgloadint(int value) {
 
 // Generate a global symbol
 void cgglobsym(struct symtable *n) {
-  int typesize;
+  int size;
   int i;
 
   if (n == NULL) return;
@@ -176,7 +171,7 @@ void cgglobsym(struct symtable *n) {
     return;
 
   // Get the size of the type
-  typesize = cgprimsize(n->type);
+  size = typesize(n->type, n->ctype);
 
   // Generate the golbl identify and the label
   cgdataseg();
@@ -184,12 +179,12 @@ void cgglobsym(struct symtable *n) {
   fprintf(Outfile, "%s:\n", n->name);
 
   // Genera the space
-  switch(typesize) {
+  switch(size) {
   case 1: fprintf(Outfile, "\t.byte\t0\n"); break;
   case 4: fprintf(Outfile, "\t.long\t0\n"); break;
   case 8: fprintf(Outfile, "\t.quad\t0\n"); break;
   default: 
-    for (i = 0; i < typesize; i++) {
+    for (i = 0; i < size; i++) {
       fprintf(Outfile, "\t.byte\t0\n"); 
     }
   } 

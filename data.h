@@ -18,15 +18,15 @@ extern_ char* Outfilename;
 
 extern_ int Line;
 extern_ int Putback;
-extern_ struct symtables *Functionid;
+extern_ struct symtable *Functionid;
 
 extern_ struct token Token;
 extern_ char Text[TEXTLEN + 1];
-/* extern_ struct symtables Symtable[NSYMBOLS]; */
-extern_ int Globs;
-extern_ int Locls;
-extern_ struct symtables *Globalhead, *Globaltail;
-extern_ struct symtables *Localhead, *Localtail;
-extern_ struct symtables *Parmhead, *Parmtail;
+
+extern_ struct symtable *Globalhead, *Globaltail;
+extern_ struct symtable *Localhead, *Localtail;
+extern_ struct symtable *Parmhead, *Parmtail;
+extern_ struct symtable *Memberhead, *Membertail;   // Temp list of struct/union members
+extern_ struct symtable *Structhead, *Structtail;   // List of struct types
 
 #endif // DATA_H_

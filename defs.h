@@ -40,6 +40,7 @@ enum {
       // no precedence
       // Type keywords
       T_VOID, T_CHAR, T_INT, T_LONG,
+      T_STRUCT,
       // Structural tokens
       T_IDENT,
       T_INTLIT,
@@ -105,6 +106,7 @@ enum {
 // e.g. 0 = no pointer, 1 = pointer, 2 = pointer pointer etc.
 enum {
       P_NONE, P_VOID = 16, P_CHAR = 32, P_INT = 48, P_LONG = 64,
+      P_STRUCT = 80,
 };
 
 // Structural types
@@ -117,6 +119,8 @@ enum {
       C_GLOBAL = 1,
       C_LOCAL,
       C_PARAM,        // Locall visible function parameter
+      C_STRUCT,       
+      C_MEMBER,       
 };
 //Token structure
 struct token{
@@ -126,10 +130,11 @@ struct token{
 
 
 // Symbol table structure
-struct symtables {
+struct symtable {
   char *name;
   int type;
   int stype;
+  struct symtable* ctype;
   int clas;
   union{
     int endlabel;
@@ -139,8 +144,8 @@ struct symtables {
     int posn;              //  from the stack base pointer
     int nelems;            // For functions, #of params. For structs, # of field
   };
-  struct symtables* next;
-  struct symtables* member;
+  struct symtable* next;
+  struct symtable* member;
 };
 
 // Abstract Syntax Tree structure
@@ -151,7 +156,7 @@ struct ASTnode{
   struct ASTnode *left;
   struct ASTnode *mid;
   struct ASTnode *right;
-  struct symtables *sym;    // For A_IDNT, the symbol 
+  struct symtable *sym;    // For A_IDNT, the symbol 
   union {
     int intvalue;     // For A_INTLIT, the integer value
     int size;         // For A_SCALE, the size to scale by

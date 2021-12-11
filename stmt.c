@@ -202,28 +202,29 @@ static struct ASTnode* return_statement(){
 // and return its AST
 struct ASTnode* single_statement(void) {
     int type;
+    struct symtable *ctype;
     switch(Token.token) {
-        case T_CHAR:
-        case T_INT:
-        case T_LONG:
-            type = parse_type();
-            ident();
-            var_declaration(type, C_LOCAL);
-	    semi();
-            return (NULL);            // No AST generated here
-            // case T_IDENT:
-            //return assignment_statement();
-        case T_IF:
-            return if_statement();
-        case T_WHILE:
-            return while_statement();
-        case T_FOR:
-            return for_statement();
-        case T_RETURN:
-            return return_statement();
-        default:
-          return (binexpr(0));
-          // fatals("Syntax error, token", tokenstr(Token.token));
+    case T_CHAR:
+    case T_INT:
+    case T_LONG:
+      type = parse_type(&ctype);
+      ident();
+      var_declaration(type,ctype, C_LOCAL);
+      semi();
+      return (NULL);            // No AST generated here
+      // case T_IDENT:
+      //return assignment_statement();
+    case T_IF:
+      return if_statement();
+    case T_WHILE:
+      return while_statement();
+    case T_FOR:
+      return for_statement();
+    case T_RETURN:
+      return return_statement();
+    default:
+      return (binexpr(0));
+      // fatals("Syntax error, token", tokenstr(Token.token));
     }
 }
 // Parse one or more statements

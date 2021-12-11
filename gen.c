@@ -275,5 +275,8 @@ void genpreamble() { cgpreamble(); }
 void genpostamble() { cgpostamble(); }
 void genfreeregs() { freeall_registers(); }
 void genprintint(int reg) { cgprintint(reg); }
-void genglobsym(struct symtables *sym) { cgglobsym(sym); }
+void genglobsym(struct symtable *sym) { cgglobsym(sym); }
 int genprimsize(int type) { return cgprimsize(type); }
+int genalign(int type, int offset, int direction) {
+  return (cgalign(type, offset, direction));
+}

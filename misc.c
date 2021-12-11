@@ -75,6 +75,7 @@ char* tokenstr(int tok) {
 			   "++", "--",
 			   "~", "!",
 			   "void", "char", "int", "long",
+			   "struct",
 			   "id",
 			   "intlit",
 			   "strlit",

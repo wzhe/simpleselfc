@@ -9,11 +9,11 @@ void reject_token(struct token *t);
 
 // tree.c
 struct ASTnode* mkastnode(int op, struct ASTnode *left, struct ASTnode* mid,
-                          struct ASTnode *right, struct symtables *sym, int intvale, int type);
+                          struct ASTnode *right, struct symtable *sym, int intvale, int type);
 
-struct ASTnode* mkastleaf(int op,struct symtables *sym, int intvale, int type);
+struct ASTnode* mkastleaf(int op,struct symtable *sym, int intvale, int type);
 
-struct ASTnode* mkastunary(int op, struct ASTnode *left, struct symtables *sym, int intvale, int type);
+struct ASTnode* mkastunary(int op, struct ASTnode *left, struct symtable *sym, int intvale, int type);
 
 void freeast(struct ASTnode* node);
 
@@ -29,10 +29,11 @@ void genpreamble();
 void genpostamble();
 void genfreeregs();
 void genprintint(int reg);
-void genglobsym(struct symtables *sym);
+void genglobsym(struct symtable *sym);
 int genprimsize(int type);
 int genlabel(void);
 int genglobstr(char *strvalue);
+int genalign(int type, int offset, int direction);
 
 // stmt.c
 struct ASTnode* single_statement(void);
@@ -57,23 +58,27 @@ char* asttypestr(int asttype);
 char* typestr(int type);
 
 // sym.c
-struct symtables* findglob(char *s);
+struct symtable* findglob(char *s);
 //int findglob(char *s);
-struct symtables* findlocl(char *s);
-struct symtables* findsym(char *s);
+struct symtable* findlocl(char *s);
+struct symtable* findsym(char *s);
+struct symtable* findstruct(char *s);
+struct symtable* findmember(char *s);
 
-struct symtables* addglob(char *name, int type, int stype, int clas, int size);
-struct symtables* addlocl(char *name, int type, int stype, int clas, int size);
-struct symtables* addparm(char *name, int type, int stype, int clas, int size);
+struct symtable* addglob(char *name, int type, struct symtable *ctype, int stype, int size);
+struct symtable* addlocl(char *name, int type, struct symtable *ctype, int clas, int size);
+struct symtable* addparm(char *name, int type, struct symtable *ctype, int clas, int size);
+struct symtable* addstruct(char *name, int type, struct symtable *ctype, int clas, int size);
+struct symtable* addmember(char *name, int type, struct symtable *ctype, int clas, int size);
 
-void copyfuncparams(struct symtables* funcparm);
+void copyfuncparams(struct symtable* funcparm);
 void freelocalsym();
 void clear_symtable();
-void showsym(struct symtables* sym);
+void showsym(struct symtable* sym);
 
 // decl.c
-int parse_type(void);
-void var_declaration(int type, int clas);
+int parse_type(struct symtable **ctype);
+struct symtable* var_declaration(int type, struct symtable* ctype, int clas);
 struct ASTnode* function_declaration(int type);
 void global_declarations(void);
 
@@ -92,5 +97,6 @@ int pointer_to(int type);
 int value_at(int type);
 int inttype(int type);
 int ptrtype(int type);
+int typesize(int type, struct symtable *ctype);
 
 #endif // DECL_H_

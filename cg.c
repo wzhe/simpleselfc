@@ -106,11 +106,11 @@ void cgjump(int l) {
   fprintf(Outfile, "\tjmp\tL%d\n", l);
 }
 // Print out a function preamble
-void cgfuncpreamble(struct symtables *n) {
+void cgfuncpreamble(struct symtable *n) {
   char *name = n->name;
   int cnt;
-  struct symtables *parm;
-  struct symtables *localvar;
+  struct symtable *parm;
+  struct symtable *localvar;
   int paramOffset = 16;        // Any pushed param start at this stack offset.
   int paramReg = FIRSTPARAMRE; // Index to the first param register in above reg list
 
@@ -150,7 +150,7 @@ void cgfuncpreamble(struct symtables *n) {
   fprintf(Outfile, "\taddq\t$%d, %%rsp\n", -stackOffset);
 }
 
-void cgfuncpostamble(struct symtables *n) {
+void cgfuncpostamble(struct symtable *n) {
   cglabel(n->endlabel);
   fprintf(Outfile, "\taddq\t$%d, %%rsp\n", stackOffset);
   fputs("\tpopq\t%rbp\n" "\tret\n", Outfile);
@@ -167,10 +167,11 @@ int cgloadint(int value) {
 }
 
 // Generate a global symbol
-void cgglobsym(struct symtables *n) {
+void cgglobsym(struct symtable *n) {
   int typesize;
   int i;
 
+  if (n == NULL) return;
   if (n->stype == S_FUNCTION)
     return;
 
@@ -183,17 +184,18 @@ void cgglobsym(struct symtables *n) {
   fprintf(Outfile, "%s:\n", n->name);
 
   // Genera the space
-  for (i = 0; i < n->size; i++) {
-    switch(typesize) {
-    case 1: fprintf(Outfile, "\t.byte\t0\n"); break;
-    case 4: fprintf(Outfile, "\t.long\t0\n"); break;
-    case 8: fprintf(Outfile, "\t.quad\t0\n"); break;
-    default: fatald("Unknown typesize in cgglobsym", typesize);
+  switch(typesize) {
+  case 1: fprintf(Outfile, "\t.byte\t0\n"); break;
+  case 4: fprintf(Outfile, "\t.long\t0\n"); break;
+  case 8: fprintf(Outfile, "\t.quad\t0\n"); break;
+  default: 
+    for (i = 0; i < typesize; i++) {
+      fprintf(Outfile, "\t.byte\t0\n"); 
     }
   } 
 }
 
-int cgstorglob(int r, struct symtables *n) {
+int cgstorglob(int r, struct symtable *n) {
   int size = cgprimsize(n->type);
   switch(size){
   case 1:
@@ -210,7 +212,7 @@ int cgstorglob(int r, struct symtables *n) {
   }
   return (r);
 }
-int cgstorlocal(int r, struct symtables* n) {
+int cgstorlocal(int r, struct symtable* n) {
   int size = cgprimsize(n->type);
   switch(size){
   case 1:
@@ -230,7 +232,7 @@ int cgstorlocal(int r, struct symtables* n) {
 // Call a function with the given symbol id
 // Pop off any arguments pushed on the stack
 // Return the register with result
-int cgcall(struct symtables *n, int numargs) {
+int cgcall(struct symtable *n, int numargs) {
 
   int outr = alloc_register();
 
@@ -244,7 +246,7 @@ int cgcall(struct symtables *n, int numargs) {
 
   return (outr);
 }
-void cgreturn(int r, struct symtables *n){
+void cgreturn(int r, struct symtable *n){
   int size = cgprimsize(n->type);
   switch(size){
   case 1:
@@ -378,7 +380,7 @@ int cgcompare_and_jump(int ASTop, int r1, int r2, int label) {
 
 // Generaate code to load the addres of a global
 // identifier into a variable. Return a new register
-int cgaddress(struct symtables *n) {
+int cgaddress(struct symtable *n) {
   int r = alloc_register();
 
   if (n->clas == C_GLOBAL) {
@@ -513,7 +515,7 @@ int cgboolean(int r, int op, int label) {
 // Return the number of the register. If the
 // operation is pre- or post-increment/decrement,
 // also perform this action.
-int cgloadglob(struct symtables *n, int op) {
+int cgloadglob(struct symtable *n, int op) {
   // Get a new register
   int r = alloc_register();
 
@@ -559,7 +561,7 @@ int cgloadglob(struct symtables *n, int op) {
   return (r);
 }
 
-int cgloadlocal(struct symtables *n, int op) {
+int cgloadlocal(struct symtable *n, int op) {
   // Get a new register
   int r = alloc_register();
 
@@ -625,3 +627,24 @@ void cgcopyarg(int r, int argposn) {
 }
 
 
+// Given a scalar type, an existing memory offset
+// (which hasn't been allocated to anything yet)
+// and a direction ( 1 is up, -1 is down), calculate
+// and return a suitably aligned memory offset
+// for this scalar type. This could be the original offset
+// or it could be above/below the original
+int cgalign(int type, int offset, int direction) {
+  int alignment;
+
+  switch(type) {
+    case P_CHAR: return (offset);
+  case P_INT:
+  case P_LONG:
+    break;
+  default: fatald("Bad type in calc_aligned_offset", type);
+  }
+
+  alignment = 4;
+  offset = (offset + direction * (alignment - 1)) & ~(alignment-1);
+  return (offset);
+}

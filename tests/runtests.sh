@@ -27,7 +27,7 @@ do if [ ! -f "out.$i" -a ! -f "err.$i" ]
 		 cmp -s "err.$i" "trail.$i"
 		 if [ "$?" -eq "1" ]
 		 then echo ": failed"
-		      diff -c "err.$i" "trial.$i"
+		      diff -c "err.$i" "trail.$i"
 		      echo
 		 else echo ": OK"
 		 fi

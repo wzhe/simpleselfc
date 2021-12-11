@@ -3,13 +3,14 @@
 #include "decl.h"
 
 
-static struct symtables*  newsym(char *name, int type, int stype, int clas, int labelorsize, int posn) {
-  struct symtables* sym = (struct symtables *)malloc(sizeof(struct symtables));
+static struct symtable*  newsym(char *name, int type, struct symtable *ctype, int stype, int clas, int labelorsize, int posn) {
+  struct symtable* sym = (struct symtable *)malloc(sizeof(struct symtable));
   if (sym == NULL) fatal("Bad malloc in newsym");
 						      
   sym->name = strdup(name);
   sym->type = type;
   sym->stype = stype;
+  sym->ctype = ctype;
   sym->clas = clas;
   sym->size = labelorsize;
   sym->posn = posn;
@@ -21,7 +22,7 @@ static struct symtables*  newsym(char *name, int type, int stype, int clas, int 
   return sym;
 }
 
-static void appendsym(struct symtables **head, struct symtables **tail, struct symtables *node) {
+static void appendsym(struct symtable **head, struct symtable **tail, struct symtable *node) {
   if (head == NULL || tail == NULL || node == NULL) {
     fatal("Either head, tail or node is NULL in appends");
   }
@@ -35,7 +36,7 @@ static void appendsym(struct symtables **head, struct symtables **tail, struct s
   node->next = NULL;
 }
 
-struct symtables* findsyminlist(char *s, struct symtables* list) {
+struct symtable* findsyminlist(char *s, struct symtable* list) {
   while(list) {
     if ((list->name != NULL) && !strcmp(s, list->name)) {
       return list;
@@ -45,14 +46,14 @@ struct symtables* findsyminlist(char *s, struct symtables* list) {
   return (NULL);
 }
 
-struct symtables* findglob(char *s) {
-  struct symtables* node;
+struct symtable* findglob(char *s) {
+  struct symtable* node;
   node = findsyminlist(s, Globalhead);
   return (node);
 }
 
-struct symtables* findlocl(char *s) {
-  struct symtables* node;
+struct symtable* findlocl(char *s) {
+  struct symtable* node;
   if (Functionid) {
     node = findsyminlist(s, Functionid->member);
     if (node != NULL) return node;
@@ -61,16 +62,27 @@ struct symtables* findlocl(char *s) {
   return (node);
 }
 
-struct symtables* findsym(char *s) {
-  struct symtables* node;
+struct symtable* findsym(char *s) {
+  struct symtable* node;
   node = findlocl(s);
   if (node != NULL) return node;
   node = findglob(s);
   return (node);
 }
 
-struct symtables* addglob(char *name, int type, int stype, int clas, int size) {
-  struct symtables *sym = newsym(name, type, stype, clas, size, 0);
+struct symtable* findstruct(char *s) {
+  struct symtable* node;
+  node = findsyminlist(s, Structhead);
+  return (node);
+}
+
+struct symtable* findmember(char *s) {
+  struct symtable* node;
+  node = findsyminlist(s, Memberhead);
+  return (node);
+}
+struct symtable* addglob(char *name, int type, struct symtable *ctype, int stype, int size) {
+  struct symtable *sym = newsym(name, type, ctype, stype, C_GLOBAL, size, 0);
   appendsym(&Globalhead, &Globaltail, sym);
 
   return (sym);
@@ -78,16 +90,28 @@ struct symtables* addglob(char *name, int type, int stype, int clas, int size) {
 
 // Add a local symbol to the symbol table. Set up its:
 // Return the slot number in the symbol table
-struct symtables* addlocl(char *name, int type, int stype, int clas, int size) {
-  struct symtables *sym = newsym(name, type, stype, clas, size, 0);
+struct symtable* addlocl(char *name, int type, struct symtable *ctype, int stype, int size) {
+  struct symtable *sym = newsym(name, type, ctype, stype, C_LOCAL, size, 0);
   appendsym(&Localhead, &Localtail, sym);
 
   return (sym);
 }
 
-struct symtables* addparm(char *name, int type, int stype, int clas, int size) {
-  struct symtables *sym = newsym(name, type, stype, clas, size, 0);
+struct symtable* addparm(char *name, int type, struct symtable *ctype, int stype, int size) {
+  struct symtable *sym = newsym(name, type, ctype, stype, C_PARAM, size, 0);
   appendsym(&Parmhead, &Parmtail, sym);
+  return (sym);
+}
+
+struct symtable* addmember(char *name, int type, struct symtable *ctype, int stype, int size) {
+  struct symtable *sym = newsym(name, type, ctype, stype, C_MEMBER, size, 0);
+  appendsym(&Memberhead, &Membertail, sym);
+  return (sym);
+}
+
+struct symtable* addstruct(char *name, int type, struct symtable *ctype, int stype, int size) {
+  struct symtable *sym = newsym(name, type, ctype, stype, C_STRUCT, size, 0);
+  appendsym(&Structhead, &Structtail, sym);
   return (sym);
 }
 
@@ -104,8 +128,8 @@ void clear_symtable() {
   Functionid = NULL;
 }
 
-void showsym(struct symtables* sym) {
-  struct symtables* m;
+void showsym(struct symtable* sym) {
+  struct symtable* m;
   if (sym == NULL) {
     printf("null\n");
     return;

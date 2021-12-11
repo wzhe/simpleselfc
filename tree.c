@@ -4,7 +4,7 @@
 
 // Build and return a generic AST node
 struct ASTnode* mkastnode(int op, struct ASTnode *left, struct ASTnode* mid,
-			  struct ASTnode *right, struct symtables *sym,int intvalue, int type){
+			  struct ASTnode *right, struct symtable *sym,int intvalue, int type){
   struct ASTnode *n;
 
   n = (struct ASTnode*) malloc(sizeof(struct ASTnode));
@@ -25,12 +25,12 @@ struct ASTnode* mkastnode(int op, struct ASTnode *left, struct ASTnode* mid,
 }
 
 // Make an AST leaf node
-struct ASTnode* mkastleaf(int op, struct symtables *sym, int intvalue, int type) {
+struct ASTnode* mkastleaf(int op, struct symtable *sym, int intvalue, int type) {
   return (mkastnode(op,NULL, NULL, NULL, sym, intvalue, type));
 }
 
 // Make a unary AST node: only one child
-struct ASTnode* mkastunary(int op, struct ASTnode *left, struct symtables* sym, int intvalue,int type) {
+struct ASTnode* mkastunary(int op, struct ASTnode *left, struct symtable* sym, int intvalue,int type) {
   return (mkastnode(op, left, NULL, NULL, sym, intvalue, type));
 }
 
@@ -85,12 +85,12 @@ void shownode(struct ASTnode* node,
     bufchild = (char *)malloc(buflen);
     if (bufchild == NULL) fatal("Bad malloc");
     sprintf(bufchild, "%s%s", childprefix, "|    ");
-    //if (node->left)
-    shownode(node->left, buf, bufchild);
-    //if (node->mid)
-    //shownode(node->mid, buf, bufchild);
-    //if (node->right)
-    shownode(node->right, buf, bufchild);
+    if (node->left)
+      shownode(node->left, buf, bufchild);
+    if (node->mid)
+      shownode(node->mid, buf, bufchild);
+    if (node->right)
+      shownode(node->right, buf, bufchild);
     free(buf);
     free(bufchild);
   }

@@ -83,7 +83,7 @@ static struct ASTnode* expression_list(void) {
 // argument and return its AST
 struct ASTnode* funccall(void) {
     struct ASTnode* tree;
-    struct symtables* funcsym;
+    struct symtable* funcsym;
 
     // Check that the identifier has been defined,
     // then make a leaf node for it.
@@ -115,7 +115,7 @@ struct ASTnode* funccall(void) {
 // return an AST tree for it
 static struct ASTnode* array_access(void) {
   struct ASTnode *left, *right;
-  struct symtables* sym;
+  struct symtable* sym;
 
     // Check that the identifier has been defined,
     // then make a leaf node for it.
@@ -136,6 +136,9 @@ static struct ASTnode* array_access(void) {
     if (!inttype(right->type))
       fatal("Array index is not of integer type");
 
+    // Scale the index by the size of the element's type
+    right = modify_type(right, left->type, A_ADD);
+
     // Return an AST tree where the array's base hase the offset
     // added to it, and dereference the element. Still an lvalue
     // at this point.
@@ -149,7 +152,7 @@ static struct ASTnode* array_access(void) {
 // The identifier is already in Text.
 static struct ASTnode* postfix(void) {
     struct ASTnode* n;
-    struct symtables* sym;
+    struct symtable* sym;
     // This could be a variable or a function call.
     // Scan in the next token to find out;
     scan(&Token);

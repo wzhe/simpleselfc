@@ -24,11 +24,11 @@ static void init(){
   Infile = NULL;
   Outfile = NULL;
 
-  Globs = 0;
-  Locls = NSYMBOLS - 1;
   Globalhead = Globaltail = NULL;
   Localhead = Localtail = NULL;
   Parmhead = Parmtail = NULL;
+  Memberhead = Membertail = NULL;
+  Structhead = Structtail = NULL;
 }
 
 // Print out a usage if started incorrectly

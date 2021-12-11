@@ -2,47 +2,16 @@
 #include "data.h"
 #include "decl.h"
 
-// Parse the current token and
-// return a primitive type enum value.
-int parse_type(void) {
-  int type;
-  switch (Token.token) {
-  case T_VOID:
-    type = P_VOID;
-    break;
-  case T_CHAR:
-    type = P_CHAR;
-    break;
-  case T_INT:
-    type = P_INT;
-    break;
-  case T_LONG:
-    type = P_LONG;
-    break;
-  default:
-    fatald("Illegal type, token", Token.token);
-  }
-
-  // Scan in one or more further '*' tokens
-  // and determine the correct pointer type
-  while (1) {
-    scan(&Token);
-    if (Token.token != T_STAR) break;
-    type = pointer_to(type);
-  }
-
-  // We leave with the next token already scanned
-  return type;
-}
 
 // param_declaration: <null>
 //                  | varible_declaration
 //                  | varible_declaration ',' varible_declaration
 // Parse the parameters in parenthese after the function name.
 // Add them as a symbols to the symbol table and return the number of parameters
-static int param_declaration(struct symtables *funcsym) {
+static int param_declaration(struct symtable *funcsym) {
   int type;
-  struct symtables *param = NULL;
+  struct symtable *ctype = NULL;
+  struct symtable *param = NULL;
   int paramcnt = 0;
 
   /* printf("func:%s, param:cnt:%d\n", funcsym->name, n->nelems); */
@@ -55,7 +24,7 @@ static int param_declaration(struct symtables *funcsym) {
   while (Token.token != T_RPAREN) {
     // Get the type and identifier
     // and add it to the symbol table
-    type = parse_type();
+    type = parse_type(&ctype);
     ident();
 
     // We have an existing prototype.
@@ -66,7 +35,7 @@ static int param_declaration(struct symtables *funcsym) {
       param = param->next;
     } else {
       // Add a new parmeter to the new prototype
-      var_declaration(type, C_PARAM);
+      var_declaration(type, ctype, C_PARAM);
     }
 
     paramcnt++;
@@ -85,8 +54,132 @@ static int param_declaration(struct symtables *funcsym) {
     fatals("Parameter count mismatch for function", funcsym->name);
   return (paramcnt);
 }
+static int var_declaration_list(struct symtable *funcsym, int clas, int separate_token, int end_token) {
+  int type;
+  int paramcnt = 0;
+  struct symtable *ctype; 
+  struct symtable *protoptr = NULL; 
 
-void var_declaration(int type, int clas){
+  if (funcsym != NULL) {
+    protoptr = funcsym->member;
+  }
+
+  while(Token.token != end_token) {
+    
+    type = parse_type(&ctype);
+    ident();
+    if (protoptr != NULL) {
+      if (type != protoptr->type)
+	fatals("Type doesn't match prototype for paramter", protoptr->name);
+      protoptr = protoptr->next;
+    } else {
+      var_declaration(type, ctype, clas);
+    }
+    paramcnt++;
+  
+    if ((Token.token != separate_token) && (Token.token != end_token))
+      fatals("Unexpected token in parameter list", tokenstr(Token.token)); 
+    if (Token.token == separate_token)
+      scan(&Token);
+  }
+
+  if ((funcsym != NULL) && (paramcnt != funcsym->nelems))
+    fatals("Parameter count mismatch for function", funcsym->name);
+
+  return (paramcnt);
+}
+
+static struct symtable* struct_declaration(void) {
+  struct symtable *ctype = NULL;
+  struct symtable *m;
+  int offset;
+
+  // Skip the struct keyword
+  scan(&Token);
+
+  // See if there is a following struct name
+  if (Token.token == T_IDENT) {
+    ctype = findstruct(Text);
+    scan(&Token);
+  }
+
+  // If the next token isn't an LBRACE, this is the usage
+  // of an existing struct type. Return the pointer to the type.
+  if (Token.token != T_LBRACE) {
+    if (ctype == NULL)
+      fatals("unknown struct type", Text);
+    return (ctype);
+  }
+  if (ctype)
+    fatals("previously defined struct", Text);
+
+  ctype = addstruct(Text, P_STRUCT, NULL, 0, 0);
+  scan(&Token);
+
+  // Scan in the list of members and attach to the struct type's node
+  var_declaration_list(NULL, C_MEMBER, T_SEMI, T_RBRACE);
+
+  rbrace();
+
+  ctype->member = Memberhead;
+  Memberhead = Membertail = NULL;
+  // Set the offset of the initial member
+  // and find the first free byte after it
+  m = ctype->member;
+  m->posn = 0;
+  offset = typesize(m->type, m->ctype);
+  for (m = m->next; m != NULL; m = m->next) {
+    offset += typesize(m->type, m->ctype);
+  }
+
+  ctype->size = offset;
+  return (ctype);
+}
+// Parse the current token and
+// return a primitive type enum value.
+int parse_type(struct symtable **ctype) {
+  int type;
+  switch (Token.token) {
+  case T_VOID:
+    type = P_VOID;
+    scan(&Token);
+    break;
+  case T_CHAR:
+    type = P_CHAR;
+    scan(&Token);
+    break;
+  case T_INT:
+    type = P_INT;
+    scan(&Token);
+    break;
+  case T_LONG:
+    type = P_LONG;
+    scan(&Token);
+    break;
+  case T_STRUCT:
+    type = P_STRUCT;
+    *ctype = struct_declaration();
+    break;
+  default:
+    fatals("Illegal type, token", tokenstr(Token.token));
+  }
+
+  // Scan in one or more further '*' tokens
+  // and determine the correct pointer type
+  while (1) {
+    if (Token.token != T_STAR) break;
+    type = pointer_to(type);
+    scan(&Token);
+  }
+
+  // We leave with the next token already scanned
+  return (type);
+}
+
+
+
+struct symtable* var_declaration(int type, struct symtable* ctype, int clas){
+  struct symtable *sym = NULL;
 
   switch (clas) {
   case C_GLOBAL:
@@ -95,9 +188,15 @@ void var_declaration(int type, int clas){
     break;
   case C_LOCAL:
   case C_PARAM:
-  default:
     if (findlocl(Text) != NULL) 
       fatals("Duplicate local variable declaration", Text);
+    break;
+  case C_MEMBER:
+    if (findmember(Text) != NULL)
+      fatals("Duplicate struct/union member declaration", Text);
+    break;
+  default:
+    fatals("Unkonw Type clas", Text);
   }
   if (Token.token == T_LBRACKET) {
     // Skip the '['
@@ -106,10 +205,10 @@ void var_declaration(int type, int clas){
     if (Token.token == T_INTLIT) {
       // Add this as a know array and generate its space in assembly.
       // We treat the array as a pointer to its element's type
-      if (clas == C_LOCAL || clas == C_PARAM) {
-	fatal("For now, declaration of local arrays is not implemented");
+      if (clas == C_GLOBAL) {
+	addglob(Text, pointer_to(type), ctype, S_ARRAY, Token.intvalue);
       } else {
-	addglob(Text, pointer_to(type), S_ARRAY, clas, Token.intvalue);
+	fatal("For now, declaration of non-global arrays is not implemented");
       }
       scan(&Token);
       match(T_RBRACKET, "]");
@@ -119,20 +218,29 @@ void var_declaration(int type, int clas){
   } else {
     // Add this as a known scalar
     // and generate its space in assembly
-    if (clas == C_LOCAL) {
-      addlocl(Text, type, S_VARIABLE, clas, 1);
-    } else if (clas == C_PARAM) {
-      addparm(Text, type, S_VARIABLE, clas, 1);
-    } else if (clas == C_GLOBAL) {
-      addglob(Text, type, S_VARIABLE, clas, 1);
+    switch (clas) {
+    case C_GLOBAL: 
+      sym = addglob(Text, type, ctype, S_VARIABLE, 1);
+      break;
+    case C_LOCAL: 
+      sym = addlocl(Text, type, ctype, S_VARIABLE, 1);
+      break;
+    case C_PARAM: 
+      sym = addparm(Text, type, ctype, S_VARIABLE, 1);
+      break;
+    case C_MEMBER:
+      sym = addmember(Text, type, ctype, S_VARIABLE, 1);
+      break;
+    
     }
   }
+  return (sym);
 }
 
 // Parse trhe declaration of a simplistic function
 struct ASTnode* function_declaration(int type){
   struct ASTnode *tree, *finalstmt;
-  struct symtables *oldfuncsym, *newfuncsym = NULL;
+  struct symtable *oldfuncsym, *newfuncsym = NULL;
   int endlabel, paramcnt;
 
   // Text has the identifier's name. If this exist and is a function,
@@ -148,7 +256,7 @@ struct ASTnode* function_declaration(int type){
   if (oldfuncsym == NULL) {
     endlabel = genlabel();
     // Add the function to the symbol table
-    newfuncsym = addglob(Text, type, S_FUNCTION, C_GLOBAL, endlabel);
+    newfuncsym = addglob(Text, type, NULL, S_FUNCTION, endlabel);
   }
 
   lparen();
@@ -203,14 +311,26 @@ struct ASTnode* function_declaration(int type){
 // ethier variables or functions
 void global_declarations(void) {
   struct ASTnode *tree;
+  struct symtable *ctype;
   int type;
 
   while (1) {
-    // We have to read past the type and identifier to see either
-    // a '(' for a function declaration
-    // or a',' or ';' for a variables declaration.
-    // Text is filled in by the ident() call.
-    type = parse_type();
+    if (Token.token == T_EOF)
+      break;
+
+    type = parse_type(&ctype);
+
+    // We might have just parsed a struct declaration
+    // with no associated variable. The next token
+    // magit be a ';'. Loop back if it is.
+    if (type == P_STRUCT && Token.token == T_SEMI) {
+      scan(&Token);
+      continue;
+    }
+
+    // We have to read past the identifier to
+    // see either a '(' for a function declaration
+    // or a ',' or ';' for a variable declaration.
     ident();
 
     if (Token.token == T_LPAREN) {
@@ -225,7 +345,7 @@ void global_declarations(void) {
       freeast(tree);
       freelocalsym();
     } else {
-      var_declaration(type, C_GLOBAL);
+      var_declaration(type, ctype, C_GLOBAL);
       semi();
     }
 

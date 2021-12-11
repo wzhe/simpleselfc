@@ -15,13 +15,20 @@ static void init(){
   O_assemble = 0;  // If true, assemble the assembly files
   O_dolink = 1;    // If true, link the object files
   O_verbose = 0;   // If true, print info on compilation stages
+
   Line = 1;
   Putback = '\n';
-  Functionid = 0;
+
+  Functionid = NULL;
+
   Infile = NULL;
   Outfile = NULL;
+
   Globs = 0;
   Locls = NSYMBOLS - 1;
+  Globalhead = Globaltail = NULL;
+  Localhead = Localtail = NULL;
+  Parmhead = Parmtail = NULL;
 }
 
 // Print out a usage if started incorrectly

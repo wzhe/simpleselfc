@@ -80,7 +80,7 @@ static struct ASTnode* if_statement(void) {
     condAST = binexpr(0);
 
     if (condAST->op < A_EQ || condAST->op > A_GE) {
-        condAST = mkastunary(A_TOBOOL, condAST, 0, condAST->type);
+      condAST = mkastunary(A_TOBOOL, condAST, NULL, 0, condAST->type);
     }
 
     rparen();
@@ -94,7 +94,7 @@ static struct ASTnode* if_statement(void) {
         scan(&Token);
         falseAST = compound_statement();
     }
-    return (mkastnode(A_IF, condAST, trueAST, falseAST, 0, P_NONE));
+    return (mkastnode(A_IF, condAST, trueAST, falseAST, NULL, 0, P_NONE));
 }
 
 // Parse an WHILE statement
@@ -112,7 +112,7 @@ static struct ASTnode* while_statement(void) {
     condAST = binexpr(0);
 
     if (condAST->op < A_EQ || condAST->op > A_GE) {
-        condAST = mkastunary(A_TOBOOL, condAST, 0, condAST->type);
+      condAST = mkastunary(A_TOBOOL, condAST, NULL, 0, condAST->type);
     }
 
     rparen();
@@ -120,7 +120,7 @@ static struct ASTnode* while_statement(void) {
     // Get the AST for the compound statement
     bodyAST = compound_statement();
 
-    return (mkastnode(A_WHILE, condAST, NULL, bodyAST, 0, P_NONE));
+    return (mkastnode(A_WHILE, condAST, NULL, bodyAST, NULL, 0, P_NONE));
 }
 
 // Parse an FOR statement
@@ -150,7 +150,7 @@ static struct ASTnode* for_statement(void) {
     condAST = binexpr(0);
 
     if (condAST->op < A_EQ || condAST->op > A_GE) {
-        condAST = mkastunary(A_TOBOOL, condAST, 0, condAST->type);
+      condAST = mkastunary(A_TOBOOL, condAST, NULL, 0, condAST->type);
     }
     semi();
 
@@ -164,21 +164,21 @@ static struct ASTnode* for_statement(void) {
     // Later on, we'll change the semantics for when some are mising.
 
     // Glue the compound statement and the postop tree
-    tree = mkastnode(A_GLUE, bodyAST, NULL, postopAST, 0, P_NONE);
+    tree = mkastnode(A_GLUE, bodyAST, NULL, postopAST, NULL, 0, P_NONE);
 
     // Make a WHILE loop with the condition and this new body
-    tree = mkastnode(A_WHILE, condAST, NULL, tree, 0, P_NONE);
+    tree = mkastnode(A_WHILE, condAST, NULL, tree, NULL, 0, P_NONE);
 
     // And glue the preop tree to the A_WHILE tree
-    return (mkastnode(A_GLUE, preopAST, NULL, tree, 0, P_NONE));
+    return (mkastnode(A_GLUE, preopAST, NULL, tree, NULL, 0, P_NONE));
 }
 
 static struct ASTnode* return_statement(){
     struct ASTnode *tree;
 
     // Can't return a value if function returns P_VOID
-    if (Symtable[Functionid].type == P_VOID)
-        fatals("Can't return from a void function", Symtable[Functionid].name);
+    if (Functionid->type == P_VOID)
+        fatals("Can't return from a void function", Functionid->name);
 
     // Match a 'print' as the first token.
     match(T_RETURN, "return");
@@ -190,10 +190,10 @@ static struct ASTnode* return_statement(){
     tree = binexpr(0);
 
     // Ensure this is compatible with the function's type
-    tree = modify_type(tree, Symtable[Functionid].type, 0);
+    tree = modify_type(tree, Functionid->type, 0);
     if (tree == NULL) fatal("Incompatible type to return");
 
-    tree = mkastunary(A_RETURN, tree, 0, P_VOID);
+    tree = mkastunary(A_RETURN, tree, NULL, 0, P_VOID);
 
     rparen();
     return (tree);
@@ -252,7 +252,7 @@ struct ASTnode* compound_statement(void) {
             if (left == NULL) {
                 left = tree;
             } else {
-                left = mkastnode(A_GLUE, left, NULL, tree, 0, P_NONE);
+	      left = mkastnode(A_GLUE, left, NULL, tree, NULL, 0, P_NONE);
             }
         }
 

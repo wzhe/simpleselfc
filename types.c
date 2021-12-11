@@ -31,7 +31,7 @@ struct ASTnode* modify_type(struct ASTnode *tree, int rtype, int op) {
     if (lsize > rsize) return (NULL);
 
     // Widen to the right
-    if (rsize > lsize) return (mkastunary(A_WIDEN, tree, 0, rtype));
+    if (rsize > lsize) return (mkastunary(A_WIDEN, tree, NULL, 0, rtype));
 
   }
 
@@ -47,7 +47,7 @@ struct ASTnode* modify_type(struct ASTnode *tree, int rtype, int op) {
     // of the original type is > 1: scale the left
     if (inttype(ltype) && ptrtype(rtype)) {
       rsize = genprimsize(value_at(rtype));
-      if (rsize > 1) return (mkastunary(A_SCALE, tree, rsize, rtype));
+      if (rsize > 1) return (mkastunary(A_SCALE, tree, NULL, rsize, rtype));
       else if (rsize == 1) return (tree);
     }
   }

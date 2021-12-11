@@ -2,14 +2,14 @@
 void freeall_registers(void);
 void cgpreamble();
 void cgpostamble();
-void cgfuncpreamble(int id);
-void cgfuncpostamble(int id);
+void cgfuncpreamble(struct symtables *n);
+void cgfuncpostamble(struct symtables *n);
 
-void cgglobsym(int id);
-int cgloadglob(int id, int op);
-int cgstorglob(int r, int id);
-int cgloadlocal(int id, int op);
-int cgstorlocal(int r, int id);
+void cgglobsym(struct symtables *n);
+int cgloadglob(struct symtables *n, int op);
+int cgstorglob(int r, struct symtables *n);
+int cgloadlocal(struct symtables *n, int op);
+int cgstorlocal(int r, struct symtables *n);
 
 int cgloadint(int value);
 int cgadd(int r1, int r2);
@@ -31,9 +31,9 @@ int cgcompare_and_jump(int ASTop, int r1, int r2, int label);
 
 int cgprimsize(int type);
 void cgprintint(int r);
-void cgreturn(int r, int functionid);
-int cgcall(int r, int id);
-int cgaddress(int id);
+void cgreturn(int r,struct symtables *functionid);
+int cgcall(struct symtables *n, int numargs);
+int cgaddress(struct symtables *n);
 int cgderef(int r, int type);
 int cgshlconst(int r, int val);
 int cgstorderef(int r1, int r2, int type);

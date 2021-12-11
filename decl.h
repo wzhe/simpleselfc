@@ -9,11 +9,11 @@ void reject_token(struct token *t);
 
 // tree.c
 struct ASTnode* mkastnode(int op, struct ASTnode *left, struct ASTnode* mid,
-                          struct ASTnode *right, int intvale, int type);
+                          struct ASTnode *right, struct symtables *sym, int intvale, int type);
 
-struct ASTnode* mkastleaf(int op, int intvale, int type);
+struct ASTnode* mkastleaf(int op,struct symtables *sym, int intvale, int type);
 
-struct ASTnode* mkastunary(int op, struct ASTnode *left, int intvale, int type);
+struct ASTnode* mkastunary(int op, struct ASTnode *left, struct symtables *sym, int intvale, int type);
 
 void freeast(struct ASTnode* node);
 
@@ -29,7 +29,7 @@ void genpreamble();
 void genpostamble();
 void genfreeregs();
 void genprintint(int reg);
-void genglobsym(int id);
+void genglobsym(struct symtables *sym);
 int genprimsize(int type);
 int genlabel(void);
 int genglobstr(char *strvalue);
@@ -57,14 +57,19 @@ char* asttypestr(int asttype);
 char* typestr(int type);
 
 // sym.c
-int findglob(char *s);
-int findlocl(char *s);
-int addglob(char *name, int type, int stype, int clas, int size);
-int addlocl(char *name, int type, int stype, int clas, int size);
-int findsym(char *s);
-void copyfuncparams(int slot);
+struct symtables* findglob(char *s);
+//int findglob(char *s);
+struct symtables* findlocl(char *s);
+struct symtables* findsym(char *s);
+
+struct symtables* addglob(char *name, int type, int stype, int clas, int size);
+struct symtables* addlocl(char *name, int type, int stype, int clas, int size);
+struct symtables* addparm(char *name, int type, int stype, int clas, int size);
+
+void copyfuncparams(struct symtables* funcparm);
 void freelocalsym();
 void clear_symtable();
+void showsym(struct symtables* sym);
 
 // decl.c
 int parse_type(void);

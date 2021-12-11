@@ -3,35 +3,6 @@
 #include "decl.h"
 #include <unistd.h>
 
-void match(int t, char *what) {
-  if (Token.token == t) {
-    scan(&Token);
-  } else {
-    printf("%s expected on line %d\n", what, Line);
-    exit(1);
-  }
-}
-
-void semi(void) {
-  match(T_SEMI, ";");
-}
-void ident(void) {
-  match(T_IDENT, "identifier");
-}
-
-void lbrace(void) {
-  match(T_LBRACE, "{");
-}
-void rbrace(void) {
-  match(T_RBRACE, "}");
-}
-void lparen(void) {
-  match(T_LPAREN, "(");
-}
-void rparen(void) {
-  match(T_RPAREN, ")");
-}
-
 void fatal(char *s){
   fprintf(stderr, "%s on line %d\n", s, Line);
   fclose(Outfile);
@@ -56,6 +27,35 @@ void fatalc(char *s, int c) {
   unlink(Outfilename);
   exit(1);
 }
+
+void match(int t, char *what) {
+  if (Token.token == t) {
+    scan(&Token);
+  } else {
+    fatals("expected", what);
+  }
+}
+
+void semi(void) {
+  match(T_SEMI, ";");
+}
+void ident(void) {
+  match(T_IDENT, "identifier");
+}
+
+void lbrace(void) {
+  match(T_LBRACE, "{");
+}
+void rbrace(void) {
+  match(T_RBRACE, "}");
+}
+void lparen(void) {
+  match(T_LPAREN, "(");
+}
+void rparen(void) {
+  match(T_RPAREN, ")");
+}
+
 
 char* tokenstr(int tok) {
 

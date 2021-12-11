@@ -124,20 +124,6 @@ struct token{
   int intvalue;
 };
 
-// Abstract Syntax Tree structure
-struct ASTnode{
-  int op;
-  int type;
-  int rvalue;
-  struct ASTnode *left;
-  struct ASTnode *mid;
-  struct ASTnode *right;
-  union {
-    int intvalue;     // For A_INTLIT, the integer value
-    int id;           // For A_IDNT, the symbol slot number
-    int size;         // For A_SCALE, the size to scale by
-  };
-};
 
 // Symbol table structure
 struct symtables {
@@ -153,6 +139,22 @@ struct symtables {
     int posn;              //  from the stack base pointer
     int nelems;            // For functions, #of params. For structs, # of field
   };
+  struct symtables* next;
+  struct symtables* member;
 };
 
+// Abstract Syntax Tree structure
+struct ASTnode{
+  int op;
+  int type;
+  int rvalue;
+  struct ASTnode *left;
+  struct ASTnode *mid;
+  struct ASTnode *right;
+  struct symtables *sym;    // For A_IDNT, the symbol 
+  union {
+    int intvalue;     // For A_INTLIT, the integer value
+    int size;         // For A_SCALE, the size to scale by
+  };
+};
 #endif // DEFS_H_

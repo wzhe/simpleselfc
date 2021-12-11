@@ -4,7 +4,7 @@
 
 // Build and return a generic AST node
 struct ASTnode* mkastnode(int op, struct ASTnode *left, struct ASTnode* mid,
-			  struct ASTnode *right, int intvalue, int type){
+			  struct ASTnode *right, struct symtables *sym,int intvalue, int type){
   struct ASTnode *n;
 
   n = (struct ASTnode*) malloc(sizeof(struct ASTnode));
@@ -18,19 +18,20 @@ struct ASTnode* mkastnode(int op, struct ASTnode *left, struct ASTnode* mid,
   n->left = left;
   n->mid = mid;
   n->right = right;
+  n->sym = sym;
   n->intvalue = intvalue;
   return (n);
 
 }
 
 // Make an AST leaf node
-struct ASTnode* mkastleaf(int op, int intvalue, int type) {
-  return (mkastnode(op,NULL, NULL, NULL, intvalue, type));
+struct ASTnode* mkastleaf(int op, struct symtables *sym, int intvalue, int type) {
+  return (mkastnode(op,NULL, NULL, NULL, sym, intvalue, type));
 }
 
 // Make a unary AST node: only one child
-struct ASTnode* mkastunary(int op, struct ASTnode *left, int intvalue,int type) {
-  return (mkastnode(op, left, NULL, NULL, intvalue, type));
+struct ASTnode* mkastunary(int op, struct ASTnode *left, struct symtables* sym, int intvalue,int type) {
+  return (mkastnode(op, left, NULL, NULL, sym, intvalue, type));
 }
 
 void freeast(struct ASTnode* node) {
@@ -70,8 +71,8 @@ void shownode(struct ASTnode* node,
 	     || node->op == A_FUNCCALL
 	     || node->op == A_ADDR
 	     ) {
-    printf(" name:%s", Symtable[node->id].name);
-    printf(" clas:%d", Symtable[node->id].clas);
+    printf(" name:%s", node->sym->name);
+    printf(" clas:%d", node->sym->clas);
   }
   printf(" type:%s", typestr(node->type));
   printf(" %s", node->rvalue ? "rvalue" : "lvalue");

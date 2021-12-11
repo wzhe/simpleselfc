@@ -169,6 +169,10 @@ static int keyword(char *s) {
             if (!strcmp(s, "struct"))
                 return (T_STRUCT);
             break;
+        case 'u':
+            if (!strcmp(s, "union"))
+                return (T_UNION);
+            break;
         case 'v':
             if (!strcmp(s, "void"))
                 return (T_VOID);

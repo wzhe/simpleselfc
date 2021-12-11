@@ -163,10 +163,10 @@ static struct ASTnode* member_access(int withpointer) {
     if ((compvar = findglob(Text)) == NULL) {
         fatals("Undeclared variable", Text);
     }
-    if (withpointer && compvar->type != pointer_to(P_STRUCT))
+    if (withpointer && compvar->type != pointer_to(P_STRUCT) && compvar->type != pointer_to(P_UNION))
       fatals("Undeclared variable",Text);
 
-    if (!withpointer && compvar->type != P_STRUCT)
+    if (!withpointer && compvar->type != P_STRUCT && compvar->type != P_UNION)
       fatals("Undeclared variable",Text);
 
     // If a pointer to a struct, get the pointer's value.

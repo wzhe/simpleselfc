@@ -59,10 +59,10 @@ char* typestr(int type);
 
 // sym.c
 struct symtable* findglob(char *s);
-//int findglob(char *s);
 struct symtable* findlocl(char *s);
 struct symtable* findsym(char *s);
 struct symtable* findstruct(char *s);
+struct symtable* findunion(char *s);
 struct symtable* findmember(char *s);
 
 struct symtable* addglob(char *name, int type, struct symtable *ctype, int stype, int size);
@@ -70,6 +70,7 @@ struct symtable* addlocl(char *name, int type, struct symtable *ctype, int clas,
 struct symtable* addparm(char *name, int type, struct symtable *ctype, int clas, int size);
 struct symtable* addstruct(char *name, int type, struct symtable *ctype, int clas, int size);
 struct symtable* addmember(char *name, int type, struct symtable *ctype, int clas, int size);
+struct symtable* addunion(char *name, int type, struct symtable *ctype, int clas, int size);
 
 void copyfuncparams(struct symtable* funcparm);
 void freelocalsym();

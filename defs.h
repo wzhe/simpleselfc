@@ -43,6 +43,7 @@ enum {
       // Type keywords
       T_VOID, T_CHAR, T_INT, T_LONG,
       T_STRUCT,
+      T_UNION,
       // Structural tokens
       T_IDENT,
       T_INTLIT,
@@ -108,7 +109,7 @@ enum {
 // e.g. 0 = no pointer, 1 = pointer, 2 = pointer pointer etc.
 enum {
       P_NONE, P_VOID = 16, P_CHAR = 32, P_INT = 48, P_LONG = 64,
-      P_STRUCT = 80,
+      P_STRUCT = 80, P_UNION = 96,
 };
 
 // Structural types

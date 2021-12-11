@@ -89,7 +89,7 @@ static int var_declaration_list(struct symtable *funcsym, int clas, int separate
   return (paramcnt);
 }
 
-static struct symtable* struct_declaration(void) {
+static struct symtable* composite_declaration(int type) {
   struct symtable *ctype = NULL;
   struct symtable *m;
   int offset;
@@ -99,7 +99,11 @@ static struct symtable* struct_declaration(void) {
 
   // See if there is a following struct name
   if (Token.token == T_IDENT) {
-    ctype = findstruct(Text);
+    if (type == P_STRUCT)
+      ctype = findstruct(Text);
+    else if (type == P_UNION)
+      ctype = findunion(Text);
+      
     scan(&Token);
   }
 
@@ -113,7 +117,11 @@ static struct symtable* struct_declaration(void) {
   if (ctype)
     fatals("previously defined struct", Text);
 
-  ctype = addstruct(Text, P_STRUCT, NULL, 0, 0);
+  if (type == P_STRUCT)
+    ctype = addstruct(Text, P_STRUCT, NULL, 0, 0);
+  else if (type == P_UNION)
+    ctype = addunion(Text, P_UNION, NULL, 0, 0);
+
   scan(&Token);
 
   // Scan in the list of members and attach to the struct type's node
@@ -130,7 +138,8 @@ static struct symtable* struct_declaration(void) {
   offset = typesize(m->type, m->ctype);
   for (m = m->next; m != NULL; m = m->next) {
     // Set the offset for this member
-    m->posn = genalign(m->type, offset, 1);
+    if (type == P_UNION) m->posn = 0;
+    else m->posn = genalign(m->type, offset, 1);
 
     // Get the offest of the next free byte after this member
     offset += typesize(m->type, m->ctype);
@@ -162,7 +171,11 @@ int parse_type(struct symtable **ctype) {
     break;
   case T_STRUCT:
     type = P_STRUCT;
-    *ctype = struct_declaration();
+    *ctype = composite_declaration(P_STRUCT);
+    break;
+  case T_UNION:
+    type = P_UNION;
+    *ctype = composite_declaration(P_UNION);
     break;
   default:
     fatals("Illegal type, token", tokenstr(Token.token));
@@ -327,7 +340,7 @@ void global_declarations(void) {
     // We might have just parsed a struct declaration
     // with no associated variable. The next token
     // magit be a ';'. Loop back if it is.
-    if (type == P_STRUCT && Token.token == T_SEMI) {
+    if ((type == P_STRUCT || type == P_UNION) && Token.token == T_SEMI) {
       scan(&Token);
       continue;
     }

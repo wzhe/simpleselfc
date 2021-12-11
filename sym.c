@@ -81,6 +81,13 @@ struct symtable* findmember(char *s) {
   node = findsyminlist(s, Memberhead);
   return (node);
 }
+
+struct symtable* findunion(char *s) {
+  struct symtable* node;
+  node = findsyminlist(s, Unionhead);
+  return (node);
+}
+
 struct symtable* addglob(char *name, int type, struct symtable *ctype, int stype, int size) {
   struct symtable *sym = newsym(name, type, ctype, stype, C_GLOBAL, size, 0);
   appendsym(&Globalhead, &Globaltail, sym);
@@ -112,6 +119,12 @@ struct symtable* addmember(char *name, int type, struct symtable *ctype, int sty
 struct symtable* addstruct(char *name, int type, struct symtable *ctype, int stype, int size) {
   struct symtable *sym = newsym(name, type, ctype, stype, C_STRUCT, size, 0);
   appendsym(&Structhead, &Structtail, sym);
+  return (sym);
+}
+
+struct symtable* addunion(char *name, int type, struct symtable *ctype, int stype, int size) {
+  struct symtable *sym = newsym(name, type, ctype, stype, C_STRUCT, size, 0);
+  appendsym(&Unionhead, &Uniontail, sym);
   return (sym);
 }
 

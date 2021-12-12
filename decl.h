@@ -42,6 +42,7 @@ struct ASTnode* compound_statement(void);
 // misc.c
 void match(int t, char *what);
 void semi(void);
+void comma(void);
 void lbrace(void);
 void rbrace(void);
 void lparen(void);
@@ -64,6 +65,9 @@ struct symtable* findsym(char *s);
 struct symtable* findstruct(char *s);
 struct symtable* findunion(char *s);
 struct symtable* findmember(char *s);
+struct symtable* findenumtype(char *s);
+struct symtable* findenumval(char *s);
+struct symtable* findtypedef(char *s);
 
 struct symtable* addglob(char *name, int type, struct symtable *ctype, int stype, int size);
 struct symtable* addlocl(char *name, int type, struct symtable *ctype, int clas, int size);
@@ -71,6 +75,8 @@ struct symtable* addparm(char *name, int type, struct symtable *ctype, int clas,
 struct symtable* addstruct(char *name, int type, struct symtable *ctype, int clas, int size);
 struct symtable* addmember(char *name, int type, struct symtable *ctype, int clas, int size);
 struct symtable* addunion(char *name, int type, struct symtable *ctype, int clas, int size);
+struct symtable* addenum(char *name, int clas, int val);
+struct symtable* addtypedef(char *name, int type, struct symtable *ctype);
 
 void copyfuncparams(struct symtable* funcparm);
 void freelocalsym();

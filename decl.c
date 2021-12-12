@@ -89,6 +89,109 @@ static int var_declaration_list(struct symtable *funcsym, int clas, int separate
   return (paramcnt);
 }
 
+static void enum_declaration(void) {
+  struct symtable *etype = NULL;
+  char *name = NULL;
+  int intval = 0;
+  // Skip the enum keyword
+  scan(&Token);
+
+  // If there's a following enum type name, get a
+  // pointer to any existing type node.
+  if (Token.token == T_IDENT) {
+    etype = findenumtype(Text);
+    name = strdup(Text);
+    scan(&Token);
+  }
+
+  // If the next token isn't a LBRACE, check
+  // that we have an enum type name, then return
+  if (Token.token != T_LBRACE) {
+    if (etype == NULL)
+      fatals("undeclared enum type", name);
+    return;
+  }
+
+  // We do have an LBRACE. Skip it
+  scan(&Token);
+
+  // If we have an enum type name, ensure that it
+  // hasn't been declared before.
+  if (etype != NULL)
+    fatals("enum type redeclared", etype->name);
+  else
+    // Build an enum type node for this identifier
+    etype = addenum(name, C_ENUMTYPE, 0);
+
+  // Loop to get all the enum values
+  while(1) {
+    // Ensure we have an identifier
+    // Copy it in case there's an int literal comping up
+    ident();
+    if (name) free(name);
+    name = strdup(Text);
+
+    // Ensure this enum value hasn't been declared before
+    etype = findenumval(name);
+    if (etype != NULL)
+      fatals("enum value redeclared", Text);
+
+    if (Token.token == T_ASSIGN) {
+      scan(&Token);
+      if (Token.token != T_INTLIT)
+	fatal("Expected int literal after '='");
+      intval = Token.intvalue;
+      scan(&Token);
+    }
+    // Build an enum value node for this identifier
+    // Increment the value for the next enum identifier.
+    etype = addenum(name, C_ENUMVAL, intval++);
+
+    // Bail out on a right curly bracket, else get a comma
+    if (Token.token == T_RBRACE)
+      break;
+    comma();
+  }
+  scan(&Token);    // Skip over the right curly bracket
+}
+
+// typedef_declaration: 'typedef' identifier existing_type
+//                    | 'typedef' identifier existing_type variable_name
+//                    ; 
+// Parse a typedef declaration and return the type
+// and ctype that it represents
+int typedef_declaration(struct symtable **ctype) {
+  int type;
+
+  // Skip the typedef keyword
+  scan(&Token);
+
+  // Get the actual type following the keyword
+  type = parse_type(ctype);
+
+  // See if the typedef identifier already exists
+  if (findtypedef(Text) != NULL)
+    fatals("redefinition of typedef", Text);
+
+  // It doesn't exist to add it to the typedef list
+  addtypedef(Text, type, *ctype);
+  scan(&Token);
+  return (type);
+}
+
+// Given a typedef name, return the type it represents
+int type_of_typedef(char *name, struct symtable **ctype) {
+  struct symtable *t;
+
+  // Loop up the typedef in the list
+  t = findtypedef(name);
+  if (t == NULL)
+    fatals("unknown type", name);
+  scan(&Token);
+  *ctype = t->ctype;
+  return (t->type);
+}
+
 static struct symtable* composite_declaration(int type) {
   struct symtable *ctype = NULL;
   struct symtable *m;
@@ -172,10 +275,28 @@ int parse_type(struct symtable **ctype) {
   case T_STRUCT:
     type = P_STRUCT;
     *ctype = composite_declaration(P_STRUCT);
+    if (Token.token == T_SEMI)
+      type = -1;
     break;
   case T_UNION:
     type = P_UNION;
     *ctype = composite_declaration(P_UNION);
+    if (Token.token == T_SEMI)
+      type = -1;
+    break;
+  case T_ENUM:
+    type = P_INT;
+    enum_declaration();
+    if (Token.token == T_SEMI)
+      type = -1;
+    break;
+  case T_TYPEDEF:
+    type = typedef_declaration(ctype);
+    if (Token.token == T_SEMI)
+      type = -1;
+    break;
+  case T_IDENT:
+    type = type_of_typedef(Text, ctype);
     break;
   default:
     fatals("Illegal type, token", tokenstr(Token.token));
@@ -340,8 +461,8 @@ void global_declarations(void) {
     // We might have just parsed a struct declaration
     // with no associated variable. The next token
     // magit be a ';'. Loop back if it is.
-    if ((type == P_STRUCT || type == P_UNION) && Token.token == T_SEMI) {
-      scan(&Token);
+    if (type == -1) {
+      semi();
       continue;
     }
 

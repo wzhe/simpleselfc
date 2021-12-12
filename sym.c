@@ -88,6 +88,33 @@ struct symtable* findunion(char *s) {
   return (node);
 }
 
+struct symtable* findenumtype(char *s) {
+  struct symtable* node = Enumhead;
+  while(node) {
+    if ((node->name != NULL) && !strcmp(s, node->name) && node->clas == C_ENUMTYPE) {
+      return (node);
+    }
+    node = node->next;
+  }
+  return (node);
+}
+
+struct symtable* findenumval(char *s) {
+  struct symtable* node = Enumhead;
+  while(node) {
+    if ((node->name != NULL) && !strcmp(s, node->name) && node->clas == C_ENUMVAL) {
+      return (node);
+    }
+    node = node->next;
+  }
+  return (node);
+}
+struct symtable* findtypedef(char *s) {
+  struct symtable* node;
+  node = findsyminlist(s, Typedefhead);
+  return (node);
+}
+
 struct symtable* addglob(char *name, int type, struct symtable *ctype, int stype, int size) {
   struct symtable *sym = newsym(name, type, ctype, stype, C_GLOBAL, size, 0);
   appendsym(&Globalhead, &Globaltail, sym);
@@ -128,6 +155,17 @@ struct symtable* addunion(char *name, int type, struct symtable *ctype, int styp
   return (sym);
 }
 
+struct symtable* addenum(char *name, int clas, int val) {
+  struct symtable *sym = newsym(name, P_INT, NULL, 0, clas, 0, val);
+  appendsym(&Enumhead, &Enumtail, sym);
+  return (sym);
+}
+
+struct symtable* addtypedef(char *name, int type, struct symtable *ctype) {
+  struct symtable *sym = newsym(name, type, ctype, 0, 0, 0, 0);
+  appendsym(&Typedefhead, &Typedeftail, sym);
+  return (sym);
+}
 void freelocalsym(){
   Localhead = Localtail = NULL;
   Parmhead = Parmtail = NULL;

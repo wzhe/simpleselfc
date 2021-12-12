@@ -44,6 +44,8 @@ enum {
       T_VOID, T_CHAR, T_INT, T_LONG,
       T_STRUCT,
       T_UNION,
+      T_ENUM,
+      T_TYPEDEF,
       // Structural tokens
       T_IDENT,
       T_INTLIT,
@@ -124,7 +126,12 @@ enum {
       C_PARAM,        // Locall visible function parameter
       C_STRUCT,       
       C_MEMBER,       
+      C_UNION,
+      C_ENUMTYPE,
+      C_ENUMVAL,
+      C_TYPEDEF,
 };
+
 //Token structure
 struct token{
   int token;

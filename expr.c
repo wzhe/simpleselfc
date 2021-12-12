@@ -25,7 +25,7 @@ static int OpPrec[] = {
 static int op_precedence(int tokentype) {
     int prec; 
     if (tokentype >= T_VOID) {
-      fatald("Token with no precedence in op_precedence:", tokentype);
+      fatals("Token with no precedence in op_precedence", tokenstr(tokentype));
     }
     prec = OpPrec[tokentype];
     return (prec);
@@ -210,6 +210,11 @@ static struct ASTnode* member_access(int withpointer) {
 static struct ASTnode* postfix(void) {
     struct ASTnode* n;
     struct symtable* sym;
+    struct symtable* enumptr;
+    if ((enumptr = findenumval(Text)) != NULL) {
+      scan(&Token);
+      return mkastleaf(A_INTLIT, NULL, enumptr->posn, P_INT);
+    }
     // This could be a variable or a function call.
     // Scan in the next token to find out;
     scan(&Token);
@@ -229,6 +234,7 @@ static struct ASTnode* postfix(void) {
     // It's a '->', so an struct member
     if (Token.token == T_ARROW)
         return (member_access(1));
+
 
     // A variable. Check that the variable exists.
     sym = findsym(Text);

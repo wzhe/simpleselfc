@@ -29,5 +29,7 @@ extern_ struct symtable *Parmhead, *Parmtail;
 extern_ struct symtable *Memberhead, *Membertail;   // Temp list of struct/union members
 extern_ struct symtable *Structhead, *Structtail;   // List of struct types
 extern_ struct symtable *Unionhead, *Uniontail;
+extern_ struct symtable *Enumhead, *Enumtail;
+extern_ struct symtable *Typedefhead, *Typedeftail;
 
 #endif // DATA_H_

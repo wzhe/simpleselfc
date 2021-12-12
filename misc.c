@@ -39,6 +39,11 @@ void match(int t, char *what) {
 void semi(void) {
   match(T_SEMI, ";");
 }
+
+void comma(void) {
+  match(T_COMMA, ",");
+}
+
 void ident(void) {
   match(T_IDENT, "identifier");
 }
@@ -79,6 +84,8 @@ char* tokenstr(int tok) {
 			   "void", "char", "int", "long",
 			   "struct",
 			   "union",
+			   "enum",
+			   "typedef",
 			   "id",
 			   "intlit",
 			   "strlit",

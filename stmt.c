@@ -202,14 +202,22 @@ static struct ASTnode* return_statement(){
 // and return its AST
 struct ASTnode* single_statement(void) {
     int type;
+    int clas = C_LOCAL;
     struct symtable *ctype;
     switch(Token.token) {
+    case T_IDENT:
+      if (findtypedef(Text) == NULL)
+	return (binexpr(0));
     case T_CHAR:
     case T_INT:
     case T_LONG:
-      type = parse_type(&ctype);
+    case T_STRUCT:
+    case T_UNION:
+    case T_ENUM:
+    case T_TYPEDEF:
+      type = parse_type(&ctype, &clas);
       ident();
-      var_declaration(type,ctype, C_LOCAL);
+      var_declaration(type,ctype, clas);
       semi();
       return (NULL);            // No AST generated here
       // case T_IDENT:

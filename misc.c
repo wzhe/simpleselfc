@@ -86,6 +86,7 @@ char* tokenstr(int tok) {
 			   "union",
 			   "enum",
 			   "typedef",
+			   "extern",
 			   "id",
 			   "intlit",
 			   "strlit",

@@ -8,6 +8,8 @@
 
 #define ASCMD "as -o"
 #define LDCMD "cc -o"
+#define CPPCMD "cpp -nostdinc -isystem"
+
 #define MAXOBJ 100
 
 // define struct and enum
@@ -46,6 +48,7 @@ enum {
       T_UNION,
       T_ENUM,
       T_TYPEDEF,
+      T_EXTERN,
       // Structural tokens
       T_IDENT,
       T_INTLIT,
@@ -130,6 +133,7 @@ enum {
       C_ENUMTYPE,
       C_ENUMVAL,
       C_TYPEDEF,
+      C_EXTERN,
 };
 
 //Token structure

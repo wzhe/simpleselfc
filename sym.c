@@ -115,8 +115,8 @@ struct symtable* findtypedef(char *s) {
   return (node);
 }
 
-struct symtable* addglob(char *name, int type, struct symtable *ctype, int stype, int size) {
-  struct symtable *sym = newsym(name, type, ctype, stype, C_GLOBAL, size, 0);
+struct symtable* addglob(char *name, int type, struct symtable *ctype, int stype, int clas, int size) {
+  struct symtable *sym = newsym(name, type, ctype, stype, clas, size, 0);
   appendsym(&Globalhead, &Globaltail, sym);
 
   return (sym);

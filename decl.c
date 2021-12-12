@@ -10,6 +10,7 @@
 // Add them as a symbols to the symbol table and return the number of parameters
 static int param_declaration(struct symtable *funcsym) {
   int type;
+  int clas = C_PARAM;
   struct symtable *ctype = NULL;
   struct symtable *param = NULL;
   int paramcnt = 0;
@@ -24,7 +25,7 @@ static int param_declaration(struct symtable *funcsym) {
   while (Token.token != T_RPAREN) {
     // Get the type and identifier
     // and add it to the symbol table
-    type = parse_type(&ctype);
+    type = parse_type(&ctype, &clas);
     ident();
 
     // We have an existing prototype.
@@ -66,7 +67,7 @@ static int var_declaration_list(struct symtable *funcsym, int clas, int separate
 
   while(Token.token != end_token) {
     
-    type = parse_type(&ctype);
+    type = parse_type(&ctype, &clas);
     ident();
     if (protoptr != NULL) {
       if (type != protoptr->type)
@@ -162,12 +163,13 @@ static void enum_declaration(void) {
 // and ctype that it represents
 int typedef_declaration(struct symtable **ctype) {
   int type;
+  int clas = C_TYPEDEF;
 
   // Skip the typedef keyword
   scan(&Token);
 
   // Get the actual type following the keyword
-  type = parse_type(ctype);
+  type = parse_type(ctype, &clas);
 
   // See if the typedef identifier already exists
   if (findtypedef(Text) != NULL)
@@ -253,8 +255,19 @@ static struct symtable* composite_declaration(int type) {
 }
 // Parse the current token and
 // return a primitive type enum value.
-int parse_type(struct symtable **ctype) {
-  int type;
+int parse_type(struct symtable **ctype, int *clas) {
+  int type, exstatic = 1;
+  // See if the class has been changed to extern (later, static)
+  while (exstatic) {
+    switch (Token.token) {
+    case T_EXTERN:
+      *clas = C_EXTERN;
+      scan(&Token);
+      break;
+    default:
+      exstatic = 0;
+    }
+  }
   switch (Token.token) {
   case T_VOID:
     type = P_VOID;
@@ -344,7 +357,7 @@ struct symtable* var_declaration(int type, struct symtable* ctype, int clas){
       // Add this as a know array and generate its space in assembly.
       // We treat the array as a pointer to its element's type
       if (clas == C_GLOBAL) {
-	addglob(Text, pointer_to(type), ctype, S_ARRAY, Token.intvalue);
+	addglob(Text, pointer_to(type), ctype, S_ARRAY, C_GLOBAL, Token.intvalue);
       } else {
 	fatal("For now, declaration of non-global arrays is not implemented");
       }
@@ -358,7 +371,7 @@ struct symtable* var_declaration(int type, struct symtable* ctype, int clas){
     // and generate its space in assembly
     switch (clas) {
     case C_GLOBAL: 
-      sym = addglob(Text, type, ctype, S_VARIABLE, 1);
+      sym = addglob(Text, type, ctype, S_VARIABLE, C_GLOBAL, 1);
       break;
     case C_LOCAL: 
       sym = addlocl(Text, type, ctype, S_VARIABLE, 1);
@@ -394,7 +407,7 @@ struct ASTnode* function_declaration(int type){
   if (oldfuncsym == NULL) {
     endlabel = genlabel();
     // Add the function to the symbol table
-    newfuncsym = addglob(Text, type, NULL, S_FUNCTION, endlabel);
+    newfuncsym = addglob(Text, type, NULL, S_FUNCTION, C_GLOBAL, endlabel);
   }
 
   lparen();
@@ -451,12 +464,13 @@ void global_declarations(void) {
   struct ASTnode *tree;
   struct symtable *ctype;
   int type;
+  int clas = C_GLOBAL;
 
   while (1) {
     if (Token.token == T_EOF)
       break;
 
-    type = parse_type(&ctype);
+    type = parse_type(&ctype, &clas);
 
     // We might have just parsed a struct declaration
     // with no associated variable. The next token

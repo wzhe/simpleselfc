@@ -14,6 +14,7 @@ extern_ int O_verbose;   // If true, print info on compilation stages
 
 extern_ FILE *Infile;
 extern_ FILE *Outfile;
+extern_ char* Infilename;
 extern_ char* Outfilename;
 
 extern_ int Line;

@@ -69,7 +69,7 @@ struct symtable* findenumtype(char *s);
 struct symtable* findenumval(char *s);
 struct symtable* findtypedef(char *s);
 
-struct symtable* addglob(char *name, int type, struct symtable *ctype, int stype, int size);
+struct symtable* addglob(char *name, int type, struct symtable *ctype, int stype, int clas, int size);
 struct symtable* addlocl(char *name, int type, struct symtable *ctype, int clas, int size);
 struct symtable* addparm(char *name, int type, struct symtable *ctype, int clas, int size);
 struct symtable* addstruct(char *name, int type, struct symtable *ctype, int clas, int size);
@@ -84,7 +84,7 @@ void clear_symtable();
 void showsym(struct symtable* sym);
 
 // decl.c
-int parse_type(struct symtable **ctype);
+int parse_type(struct symtable **ctype, int *clas);
 struct symtable* var_declaration(int type, struct symtable* ctype, int clas);
 struct ASTnode* function_declaration(int type);
 void global_declarations(void);

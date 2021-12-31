@@ -19,6 +19,7 @@ static void init(){
   Line = 1;
   Putback = '\n';
 
+  Looplevel = 0;
   Functionid = NULL;
 
   Infile = NULL;

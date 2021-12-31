@@ -19,6 +19,8 @@ extern_ char* Outfilename;
 
 extern_ int Line;
 extern_ int Putback;
+
+extern_ int Looplevel;
 extern_ struct symtable *Functionid;
 
 extern_ struct token Token;

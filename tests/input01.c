@@ -1,4 +1,5 @@
-int printf(char *fmt);
+#include <stdio.h>
+//int printf(char *fmt);
 
 void main()
 { printf("%d\n", 12 * 3);

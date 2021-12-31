@@ -24,7 +24,7 @@ struct ASTnode* binexpr(int ptp);
 struct ASTnode* funccall(void);
 
 // gen.c
-int genAST(struct ASTnode *n, int label, int parentASTop);
+int genAST(struct ASTnode *n, int label, int looptoplabel, int loopendlabel, int parentASTop);
 void genpreamble();
 void genpostamble();
 void genfreeregs();

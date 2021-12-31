@@ -435,6 +435,7 @@ struct ASTnode* function_declaration(int type){
   // Copy the global parameters to be local parameters
   /* copyfuncparams(funcsym); */
 
+  Looplevel = 0;
   Functionid = oldfuncsym;
   // Get the AST tree for the compound statement
   tree = compound_statement();
@@ -492,7 +493,7 @@ void global_declarations(void) {
 	continue;
       }
       if (O_dumpAST) show(tree);
-      genAST(tree, NOREG, 0);
+      genAST(tree, NOREG, NOLABEL, NOLABEL, 0);
       // Now free the 
       freeast(tree);
       freelocalsym();

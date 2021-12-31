@@ -4,7 +4,7 @@
 
 // Build and return a generic AST node
 struct ASTnode* mkastnode(int op, struct ASTnode *left, struct ASTnode* mid,
-			  struct ASTnode *right, struct symtable *sym,int intvalue, int type){
+                          struct ASTnode *right, struct symtable *sym,int intvalue, int type){
   struct ASTnode *n;
 
   n = (struct ASTnode*) malloc(sizeof(struct ASTnode));
@@ -49,7 +49,7 @@ int havechild(struct ASTnode* tree) {
 
 
 void shownode(struct ASTnode* node,
-	      char* prefix, char* childprefix) {
+              char* prefix, char* childprefix) {
   char *buf = NULL;
   char *bufchild = NULL;
   int buflen = 0;
@@ -64,10 +64,10 @@ void shownode(struct ASTnode* node,
   if (node->op == A_INTLIT) {
     printf(" v:%d", node->intvalue);
   } else if (node->op == A_IDENT
-	     || node->op == A_FUNCTION
-	     || node->op == A_FUNCCALL
-	     || node->op == A_ADDR
-	     ) {
+             || node->op == A_FUNCTION
+             || node->op == A_FUNCCALL
+             || node->op == A_ADDR
+  ) {
     printf(" name:%s", node->sym->name);
     printf(" clas:%d", node->sym->clas);
   }

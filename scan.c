@@ -160,9 +160,15 @@ static int scanident(int c, char *buf, int lim) {
 // to waste time strcmp()ing against all the keywords.
 static int keyword(char *s) {
     switch (*s) {
+        case 'b':
+            if (!strcmp(s, "break"))
+                return (T_BREAK);
+            break;
         case 'c':
             if (!strcmp(s, "char"))
                 return (T_CHAR);
+            if (!strcmp(s, "continue"))
+                return (T_CONTINUE);
             break;
         case 'e':
             if (!strcmp(s, "else"))

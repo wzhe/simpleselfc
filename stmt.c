@@ -80,7 +80,7 @@ static struct ASTnode* if_statement(void) {
     condAST = binexpr(0);
 
     if (condAST->op < A_EQ || condAST->op > A_GE) {
-      condAST = mkastunary(A_TOBOOL, condAST, NULL, 0, condAST->type);
+        condAST = mkastunary(A_TOBOOL, condAST, NULL, 0, condAST->type);
     }
 
     rparen();
@@ -112,13 +112,15 @@ static struct ASTnode* while_statement(void) {
     condAST = binexpr(0);
 
     if (condAST->op < A_EQ || condAST->op > A_GE) {
-      condAST = mkastunary(A_TOBOOL, condAST, NULL, 0, condAST->type);
+        condAST = mkastunary(A_TOBOOL, condAST, NULL, 0, condAST->type);
     }
 
     rparen();
 
+    Looplevel++;
     // Get the AST for the compound statement
     bodyAST = compound_statement();
+    Looplevel--;
 
     return (mkastnode(A_WHILE, condAST, NULL, bodyAST, NULL, 0, P_NONE));
 }
@@ -150,7 +152,7 @@ static struct ASTnode* for_statement(void) {
     condAST = binexpr(0);
 
     if (condAST->op < A_EQ || condAST->op > A_GE) {
-      condAST = mkastunary(A_TOBOOL, condAST, NULL, 0, condAST->type);
+        condAST = mkastunary(A_TOBOOL, condAST, NULL, 0, condAST->type);
     }
     semi();
 
@@ -158,7 +160,9 @@ static struct ASTnode* for_statement(void) {
     rparen();
 
     // Get the AST for the compound statement
+    Looplevel++;
     bodyAST = compound_statement();
+    Looplevel--;
 
     // For now, all four sub-trees have to be non-NULL.
     // Later on, we'll change the semantics for when some are mising.
@@ -198,6 +202,20 @@ static struct ASTnode* return_statement(){
     rparen();
     return (tree);
 }
+
+static struct ASTnode* break_statement() {
+    if (Looplevel == 0)
+        fatal("no loop to break out from");
+    scan(&Token);
+    return (mkastleaf(A_BREAK, NULL, 0, 0));
+}
+
+static struct ASTnode* continue_statement() {
+    if (Looplevel == 0)
+        fatal("no loop to continue out from");
+    scan(&Token);
+    return (mkastleaf(A_CONTINUE, NULL, 0, 0));
+}
 // Parse a single statement
 // and return its AST
 struct ASTnode* single_statement(void) {
@@ -205,34 +223,38 @@ struct ASTnode* single_statement(void) {
     int clas = C_LOCAL;
     struct symtable *ctype;
     switch(Token.token) {
-    case T_IDENT:
-      if (findtypedef(Text) == NULL)
-	return (binexpr(0));
-    case T_CHAR:
-    case T_INT:
-    case T_LONG:
-    case T_STRUCT:
-    case T_UNION:
-    case T_ENUM:
-    case T_TYPEDEF:
-      type = parse_type(&ctype, &clas);
-      ident();
-      var_declaration(type,ctype, clas);
-      semi();
-      return (NULL);            // No AST generated here
-      // case T_IDENT:
-      //return assignment_statement();
-    case T_IF:
-      return if_statement();
-    case T_WHILE:
-      return while_statement();
-    case T_FOR:
-      return for_statement();
-    case T_RETURN:
-      return return_statement();
-    default:
-      return (binexpr(0));
-      // fatals("Syntax error, token", tokenstr(Token.token));
+        case T_IDENT:
+            if (findtypedef(Text) == NULL)
+                return (binexpr(0));
+        case T_CHAR:
+        case T_INT:
+        case T_LONG:
+        case T_STRUCT:
+        case T_UNION:
+        case T_ENUM:
+        case T_TYPEDEF:
+            type = parse_type(&ctype, &clas);
+            ident();
+            var_declaration(type,ctype, clas);
+            semi();
+            return (NULL);            // No AST generated here
+            // case T_IDENT:
+            //return assignment_statement();
+        case T_IF:
+            return if_statement();
+        case T_WHILE:
+            return while_statement();
+        case T_FOR:
+            return for_statement();
+        case T_BREAK:
+            return (break_statement());
+        case T_CONTINUE:
+            return (continue_statement());
+        case T_RETURN:
+            return return_statement();
+        default:
+            return (binexpr(0));
+            // fatals("Syntax error, token", tokenstr(Token.token));
     }
 }
 // Parse one or more statements
@@ -251,7 +273,10 @@ struct ASTnode* compound_statement(void) {
         if (tree != NULL &&
             (tree->op == A_ASSIGN
              || tree->op == A_FUNCCALL
-             || tree->op == A_RETURN)) {
+             || tree->op == A_RETURN
+             || tree->op == A_BREAK
+             || tree->op == A_CONTINUE
+            )) {
             semi();
         }
 
@@ -261,7 +286,7 @@ struct ASTnode* compound_statement(void) {
             if (left == NULL) {
                 left = tree;
             } else {
-	      left = mkastnode(A_GLUE, left, NULL, tree, NULL, 0, P_NONE);
+                left = mkastnode(A_GLUE, left, NULL, tree, NULL, 0, P_NONE);
             }
         }
 

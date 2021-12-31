@@ -8,7 +8,7 @@
 
 #define ASCMD "as -o"
 #define LDCMD "cc -o"
-#define CPPCMD "cpp -nostdinc -isystem"
+#define CPPCMD "cpp -nostdinc -isystem "
 
 #define MAXOBJ 100
 
@@ -62,6 +62,8 @@ enum {
       T_IF, T_ELSE,
       T_WHILE,
       T_FOR,
+      T_BREAK,
+      T_CONTINUE,
       T_RETURN,
       T_SIZE,  // Just count the token size;
 };
@@ -100,6 +102,8 @@ enum {
       A_IF, A_ELSE,
       A_WHILE,
       A_FOR,
+      A_BREAK,
+      A_CONTINUE,
       A_FUNCTION,
       A_RETURN,
       A_FUNCCALL,

@@ -113,6 +113,51 @@ int gen_funccall(struct ASTnode *n) {
   return (cgcall(n->sym, numargs));
 }
 
+// Generate the code for a SWITCH statement
+static int genSWITCH(struct ASTnode *n) {
+  int *caseval, *caselabel;
+  int Ljumptop, Lend;
+  int i, reg, defaultlabel = 0, casecount = 0;
+  struct ASTnode *c;
+
+  // Create arrays for the case values and associated labels.
+  // Ensure that we have at least one position in each array.
+  caseval = (int *)malloc((n->intvalue + 1) * sizeof(int));
+  caselabel = (int *)malloc((n->intvalue + 1) * sizeof(int));
+
+  // Generate label for the top of the jump table, and the end of
+  // the switch statement. Set a default label for the end of the
+  // switch ,in case we don't have a default.
+  Ljumptop = genlabel();
+  Lend = genlabel();
+  defaultlabel = Lend;
+
+  // Output the code to calculate the switch condition
+  reg = genAST(n->left, NOLABEL, NOLABEL, NOLABEL, 0);
+  cgjump(Ljumptop);
+  genfreeregs();
+
+  // Walk the right child linked list to generate the code for each case
+  for (i = 0, c = n->right; c != NULL; i++, c = c->right) {
+    // Get a label for this code. Store it and the case value
+    // in the arrays. Record if it is the default case.
+    caselabel[i] = genlabel();
+    caseval[i] = c->intvalue;
+    cglabel(caselabel[i]);
+    if (c->op == A_DEFAULT)
+      defaultlabel = caselabel[i];
+    else
+      casecount++;
+    genAST(c->left, NOLABEL, NOLABEL, Lend, 0);
+    genfreeregs();
+  }
+  cgjump(Lend);
+  cgswitch(reg, casecount, Ljumptop, caselabel, caseval, defaultlabel);
+  cglabel(Lend);
+
+  return (NOREG);
+}
+
 // Given an AST, the register (if any) that holds
 // the previous rvalue, and the AST op of the parent.
 // generate assembly code recursively.
@@ -130,6 +175,8 @@ int genAST(struct ASTnode *n, int iflabel, int looptoplabel, int loopendlabel, i
       return (NOREG);
     case A_FUNCCALL:
       return (gen_funccall(n));
+    case A_SWITCH:
+      return (genSWITCH(n));
     case A_GLUE:
       // Do each child statement, and free the
       // registers after each child.

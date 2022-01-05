@@ -374,7 +374,11 @@ struct ASTnode* binexpr(int ptp) {
 
     // If no tokens left, return into a node type
     tokentype = Token.token;
-    if (tokentype == T_COMMA || tokentype == T_SEMI || tokentype == T_RPAREN || tokentype == T_RBRACKET) {
+    if (tokentype == T_COMMA
+        || tokentype == T_SEMI
+        || tokentype == T_COLON
+        || tokentype == T_RPAREN
+        || tokentype == T_RBRACKET) {
       left->rvalue = 1;
         return (left);
     }

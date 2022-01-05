@@ -21,6 +21,7 @@ extern_ int Line;
 extern_ int Putback;
 
 extern_ int Looplevel;
+extern_ int Switchlevel;
 extern_ struct symtable *Functionid;
 
 extern_ struct token Token;

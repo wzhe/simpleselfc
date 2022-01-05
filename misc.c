@@ -90,7 +90,7 @@ char* tokenstr(int tok) {
     "id",
     "intlit",
     "strlit",
-    ";", ",",
+    ";", ",", ":",
     "{", "}",
     "(", ")",
     "[", "]",
@@ -100,6 +100,9 @@ char* tokenstr(int tok) {
     "for",
     "break",
     "continue",
+    "switch",
+    "case",
+    "default",
     "return",
 };
     if ((sizeof(tokstr) / sizeof(tokstr[0])) != T_SIZE)
@@ -143,6 +146,9 @@ char* asttypestr(int asttype) {
     "for",
     "break",
     "continue",
+    "switch",
+    "case",
+    "default",
     "functiondecl",
     "return",
     "call",

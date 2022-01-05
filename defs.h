@@ -55,6 +55,7 @@ enum {
       T_STRLIT,
       T_SEMI,
       T_COMMA,
+      T_COLON,
       T_LBRACE, T_RBRACE,
       T_LPAREN, T_RPAREN,
       T_LBRACKET, T_RBRACKET,
@@ -64,6 +65,9 @@ enum {
       T_FOR,
       T_BREAK,
       T_CONTINUE,
+      T_SWITCH,
+      T_CASE,
+      T_DEFAULT,
       T_RETURN,
       T_SIZE,  // Just count the token size;
 };
@@ -104,6 +108,9 @@ enum {
       A_FOR,
       A_BREAK,
       A_CONTINUE,
+      A_SWITCH,
+      A_CASE,
+      A_DEFAULT,
       A_FUNCTION,
       A_RETURN,
       A_FUNCCALL,

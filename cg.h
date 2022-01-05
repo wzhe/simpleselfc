@@ -54,3 +54,6 @@ int cgboolean(int r, int op, int label);
 void cgcopyarg(int r, int argposn);
 
 int cgalign(int type, int offset, int direction);
+
+void cgswitch(int reg, int casecount, int toplabel,
+              int *caselabel, int *caseval, int defaultlabel);

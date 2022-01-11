@@ -82,9 +82,11 @@ static int genWHILEAST(struct ASTnode *n) {
   genAST(n->left, Lend, Lstart,  Lend, n->op);
   genfreeregs();
 
-  // Generate the compound statement for the body
-  genAST(n->right, NOLABEL, Lstart, Lend, n->op);
-  genfreeregs();
+  if (n->right != NULL) {
+    // Generate the compound statement for the body
+    genAST(n->right, NOLABEL, Lstart, Lend, n->op);
+    genfreeregs();
+  }
 
   // Finally output the jump back to the condition,
   // and the end label
@@ -180,8 +182,11 @@ int genAST(struct ASTnode *n, int iflabel, int looptoplabel, int loopendlabel, i
     case A_GLUE:
       // Do each child statement, and free the
       // registers after each child.
-      genAST(n->left, NOLABEL, looptoplabel, loopendlabel, n->op);
-      genfreeregs();
+      if (n->left) { // exprelist left node is nul
+                     // l
+        genAST(n->left, NOLABEL, looptoplabel, loopendlabel, n->op);
+        genfreeregs();
+      }
       genAST(n->right, NOLABEL, looptoplabel, loopendlabel, n->op);
       genfreeregs();
       return (NOREG);

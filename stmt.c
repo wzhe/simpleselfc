@@ -86,13 +86,13 @@ static struct ASTnode* if_statement(void) {
     rparen();
 
     // Get the AST for the compound statement
-    trueAST = compound_statement();
+    trueAST = single_statement();
 
     // If we have an 'else', skip it and get the AST
     // for the compound statement
     if (Token.token == T_ELSE) {
         scan(&Token);
-        falseAST = compound_statement();
+        falseAST = single_statement();
     }
     return (mkastnode(A_IF, condAST, trueAST, falseAST, NULL, 0, P_NONE));
 }
@@ -119,7 +119,7 @@ static struct ASTnode* while_statement(void) {
 
     Looplevel++;
     // Get the AST for the compound statement
-    bodyAST = compound_statement();
+    bodyAST = single_statement();
     Looplevel--;
 
     return (mkastnode(A_WHILE, condAST, NULL, bodyAST, NULL, 0, P_NONE));
@@ -136,14 +136,14 @@ static struct ASTnode* while_statement(void) {
 static struct ASTnode* for_statement(void) {
     struct ASTnode *condAST, *bodyAST;
     struct ASTnode *preopAST, *postopAST;
-    struct ASTnode *tree;
+    struct ASTnode *tree = NULL;
 
     // Ensure we have 'for' '('
     match(T_FOR, "for");
     lparen();
 
     // Get the condition and the ';'
-    preopAST = single_statement();
+    preopAST = expression_list(T_SEMI);
     semi();
 
     // Parse the following expression
@@ -151,30 +151,41 @@ static struct ASTnode* for_statement(void) {
     // Ensure the tree's operation is a comparison.
     condAST = binexpr(0);
 
+    if (condAST == NULL) {
+        fatal("Miss condition in for loop!");
+    }
+
     if (condAST->op < A_EQ || condAST->op > A_GE) {
         condAST = mkastunary(A_TOBOOL, condAST, NULL, 0, condAST->type);
     }
     semi();
 
-    postopAST = single_statement();
+    postopAST = expression_list(T_RPAREN);
     rparen();
 
     // Get the AST for the compound statement
     Looplevel++;
-    bodyAST = compound_statement();
+    bodyAST = single_statement();
     Looplevel--;
 
-    // For now, all four sub-trees have to be non-NULL.
-    // Later on, we'll change the semantics for when some are mising.
-
     // Glue the compound statement and the postop tree
-    tree = mkastnode(A_GLUE, bodyAST, NULL, postopAST, NULL, 0, P_NONE);
+    if (postopAST != NULL && bodyAST != NULL) {
+        tree = mkastnode(A_GLUE, bodyAST, NULL, postopAST, NULL, 0, P_NONE);
+    } else if (postopAST == NULL) {
+        tree = bodyAST;
+    } else {
+        tree = postopAST;
+    }
 
     // Make a WHILE loop with the condition and this new body
     tree = mkastnode(A_WHILE, condAST, NULL, tree, NULL, 0, P_NONE);
 
     // And glue the preop tree to the A_WHILE tree
-    return (mkastnode(A_GLUE, preopAST, NULL, tree, NULL, 0, P_NONE));
+    if (preopAST != NULL) {
+        tree = mkastnode(A_GLUE, preopAST, NULL, tree, NULL, 0, P_NONE);
+    }
+
+    return (tree);
 }
 
 static struct ASTnode* return_statement(){
@@ -200,13 +211,15 @@ static struct ASTnode* return_statement(){
     tree = mkastunary(A_RETURN, tree, NULL, 0, P_VOID);
 
     rparen();
+    semi();
     return (tree);
 }
 
 static struct ASTnode* break_statement() {
-    if (Looplevel == 0)
-        fatal("no loop to break out from");
+    if (Looplevel == 0 && Switchlevel == 0)
+        fatal("no loop or switch to break out from");
     scan(&Token);
+    semi();
     return (mkastleaf(A_BREAK, NULL, 0, 0));
 }
 
@@ -214,6 +227,7 @@ static struct ASTnode* continue_statement() {
     if (Looplevel == 0)
         fatal("no loop to continue out from");
     scan(&Token);
+    semi();
     return (mkastleaf(A_CONTINUE, NULL, 0, 0));
 }
 
@@ -275,7 +289,7 @@ static struct ASTnode* switch_statement() {
                 }
                 // Scant the ':' and get the compound expression
                 match(T_COLON, ":");
-                left = compound_statement();
+                left = compound_statement(1);
                 casecount++;
 
                 // Build a sub-tree with the compound statement as left child
@@ -306,10 +320,20 @@ struct ASTnode* single_statement(void) {
     int type;
     int clas = C_LOCAL;
     struct symtable *ctype;
+    struct ASTnode *stmt;
+
     switch(Token.token) {
+        case T_LBRACE:
+            lbrace();
+            stmt = compound_statement(0);
+            rbrace();
+            return (stmt);
         case T_IDENT:
-            if (findtypedef(Text) == NULL)
-                return (binexpr(0));
+            if (findtypedef(Text) == NULL) {
+                stmt = binexpr(0);
+                semi();
+                return (stmt);
+            }
         case T_CHAR:
         case T_INT:
         case T_LONG:
@@ -339,32 +363,19 @@ struct ASTnode* single_statement(void) {
         case T_SWITCH:
             return (switch_statement());
         default:
-            return (binexpr(0));
-            // fatals("Syntax error, token", tokenstr(Token.token));
+            stmt = binexpr(0);
+            semi();
+            return (stmt);
     }
 }
 // Parse one or more statements
 // and return its AST
-struct ASTnode* compound_statement(void) {
+struct ASTnode* compound_statement(int inswitch) {
     struct ASTnode  *left = NULL;
     struct ASTnode  *tree = NULL;
 
-    // Require a left curly bracket
-    lbrace();
-
     while(1) {
         tree = single_statement();
-
-        // Some satements must be followed by a semicolon
-        if (tree != NULL &&
-            (tree->op == A_ASSIGN
-             || tree->op == A_FUNCCALL
-             || tree->op == A_RETURN
-             || tree->op == A_BREAK
-             || tree->op == A_CONTINUE
-            )) {
-            semi();
-        }
 
         // For each new tree, either save it in left
         // if left is empty, or glue the left and the new tree together
@@ -379,8 +390,8 @@ struct ASTnode* compound_statement(void) {
         // When we hit a right curly bracket,
         // skip past it and return the AST
         if (Token.token == T_RBRACE) {
-            rbrace();
             return (left);
         }
+        if (inswitch && (Token.token == T_CASE || Token.token == T_DEFAULT)) return (left);
     }
 }

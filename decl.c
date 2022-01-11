@@ -435,10 +435,14 @@ struct ASTnode* function_declaration(int type){
   // Copy the global parameters to be local parameters
   /* copyfuncparams(funcsym); */
 
-  Looplevel = 0;
   Functionid = oldfuncsym;
+
+  Looplevel = 0;
+  Switchlevel = 0;
+  lbrace();
   // Get the AST tree for the compound statement
-  tree = compound_statement();
+  tree = compound_statement(0);
+  rbrace();
 
   // If the function type isn't P_VOID, check that the last
   // AST operation in the compound statement was a return statement
@@ -489,8 +493,8 @@ void global_declarations(void) {
     if (Token.token == T_LPAREN) {
       tree = function_declaration(type);
       if (tree == NULL) {
-	// Only a function prototype
-	continue;
+        // Only a function prototype
+        continue;
       }
       if (O_dumpAST) show(tree);
       genAST(tree, NOREG, NOLABEL, NOLABEL, 0);

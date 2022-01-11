@@ -11,10 +11,10 @@ $(TARGET): $(SRCS)
 	cc -o $(TARGET) -g -Wall -Wextra  -DINCDIR=\"$(INCDIR)\" $^
 
 clean:
-	rm -f $(TARGET) *.o out *.s
+	rm -f $(TARGET) *.o a.out *.s
 
 test: $(TARGET) tests/runtests.sh
 	(cd tests; chmod +x runtests.sh; ./runtests.sh)
 
 $(NUM): $(TARGET)
-	./$(TARGET) -T -v -o out tests/input$(NUM).c
+	./$(TARGET) -T -v tests/input$(NUM).c

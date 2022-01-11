@@ -52,13 +52,13 @@ static int binthop(int tok) {
 //                  | expression
 //                  | expression ',' expression_list
 
-static struct ASTnode* expression_list(void) {
+struct ASTnode* expression_list(int endtoken) {
   struct ASTnode *tree = NULL;
   struct ASTnode *child = NULL;
   int exprcount = 0;
 
   // Loop until the final right parenthese
-  while (Token.token != T_RPAREN) {
+  while (Token.token != endtoken) {
     // Get the type and identifier
     // and add it to the symbol table
     child = binexpr(0);
@@ -67,16 +67,11 @@ static struct ASTnode* expression_list(void) {
     // Build an A_GLUE AST node with the previous tree  as tree left child
     // and then new expression as the right child.
     tree = mkastnode(A_GLUE, tree, NULL, child, NULL, exprcount, P_NONE);
-    
-    // Must have a ',' or ')' at this point
-    switch (Token.token) {
-    case T_COMMA: scan(&Token); break;
-    case T_RPAREN:break;
-    default:
-      fatals("Unexpected token in expression list", tokenstr(Token.token));
-    }
+
+    if (Token.token == endtoken) break;
+    match(T_COMMA, ",");
   }
-  return tree;
+  return (tree);
 }
 
 // Parse a function call with a single expression
@@ -96,7 +91,7 @@ struct ASTnode* funccall(void) {
     lparen();
 
     // Parse the following expression
-    tree = expression_list();
+    tree = expression_list(T_RPAREN);
 
     // TODO: Check type of each argument against the function's prototypes
     
@@ -379,7 +374,7 @@ struct ASTnode* binexpr(int ptp) {
         || tokentype == T_COLON
         || tokentype == T_RPAREN
         || tokentype == T_RBRACKET) {
-      left->rvalue = 1;
+        left->rvalue = 1;
         return (left);
     }
 
@@ -437,7 +432,7 @@ struct ASTnode* binexpr(int ptp) {
         // Update the details of the current token.
         // If no tokens left, return just the left node
         tokentype = Token.token;
-        if (tokentype == T_SEMI || tokentype == T_RPAREN)
+        if (tokentype == T_SEMI || tokentype == T_COMMA || tokentype == T_RPAREN)
             return (left);
     }
 

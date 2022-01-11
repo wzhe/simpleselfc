@@ -22,6 +22,7 @@ void show(struct ASTnode* tree);
 // expr.c
 struct ASTnode* binexpr(int ptp);
 struct ASTnode* funccall(void);
+struct ASTnode* expression_list(int endtoken);
 
 // gen.c
 int genAST(struct ASTnode *n, int label, int looptoplabel, int loopendlabel, int parentASTop);
@@ -37,7 +38,7 @@ int genalign(int type, int offset, int direction);
 
 // stmt.c
 struct ASTnode* single_statement(void);
-struct ASTnode* compound_statement(void);
+struct ASTnode* compound_statement(int inswitch);
 
 // misc.c
 void match(int t, char *what);

@@ -652,12 +652,16 @@ void cgcopyarg(int r, int argposn) {
 int cgalign(int type, int offset, int direction) {
   int alignment;
 
-  switch(type) {
-    case P_CHAR: return (offset);
+  if (!ptrtype(type)) {
+    switch (type) {
+    case P_CHAR:
+      return (offset);
     case P_INT:
     case P_LONG:
       break;
-    default: fatald("Bad type in calc_aligned_offset", type);
+    default:
+      fatald("Bad type in calc_aligned_offset", type);
+    }
   }
 
   alignment = 4;

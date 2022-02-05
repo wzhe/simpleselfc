@@ -120,7 +120,7 @@ static void enum_declaration(void) {
   // hasn't been declared before.
   if (etype != NULL)
     fatals("enum type redeclared", etype->name);
-  else
+  else if (name != NULL)
     // Build an enum type node for this identifier
     etype = addenum(name, C_ENUMTYPE, 0);
 
@@ -140,7 +140,7 @@ static void enum_declaration(void) {
     if (Token.token == T_ASSIGN) {
       scan(&Token);
       if (Token.token != T_INTLIT)
-	fatal("Expected int literal after '='");
+        fatal("Expected int literal after '='");
       intval = Token.intvalue;
       scan(&Token);
     }
@@ -148,10 +148,10 @@ static void enum_declaration(void) {
     // Increment the value for the next enum identifier.
     etype = addenum(name, C_ENUMVAL, intval++);
 
+    comma();
     // Bail out on a right curly bracket, else get a comma
     if (Token.token == T_RBRACE)
       break;
-    comma();
   }
   scan(&Token);    // Skip over the right curly bracket
 }

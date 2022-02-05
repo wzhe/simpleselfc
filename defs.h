@@ -174,17 +174,18 @@ struct symtable {
 };
 
 // Abstract Syntax Tree structure
-struct ASTnode{
+struct ASTnode {
   int op;
   int type;
   int rvalue;
   struct ASTnode *left;
   struct ASTnode *mid;
   struct ASTnode *right;
-  struct symtable *sym;    // For A_IDNT, the symbol 
+  struct symtable *sym; // For A_IDNT, the symbol
   union {
-    int intvalue;     // For A_INTLIT, the integer value
-    int size;         // For A_SCALE, the size to scale by
+    int intvalue; // For A_INTLIT, the integer value
+    int size;     // For A_SCALE, the size to scale by
   };
 };
+
 #endif // DEFS_H_

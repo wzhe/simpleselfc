@@ -334,6 +334,7 @@ struct ASTnode* single_statement(void) {
                 semi();
                 return (stmt);
             }
+            //fall through
         case T_CHAR:
         case T_INT:
         case T_LONG:

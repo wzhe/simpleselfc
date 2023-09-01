@@ -1,2 +1,2 @@
-enum fred { x, y, z };
-enum fred { a, b };
+enum fred { x, y, z, };
+enum fred { a, b, };

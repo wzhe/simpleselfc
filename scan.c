@@ -231,7 +231,7 @@ static int keyword(char *s) {
 static void showtoken(struct token *t) {
     printf("Token %s", tokenstr(t->token));
     if (t->token == T_INTLIT) printf(",value %d", t->intvalue);
-    else if (t->token == T_IDENT) printf(",value %s", Text);
+    else if (t->token == T_STRLIT || t->token == T_IDENT) printf(",value %s", Text);
     printf("\n");
 }
 

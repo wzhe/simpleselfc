@@ -157,23 +157,23 @@ int main(int argc, char* argv[]) {
     if (argv[i][0] != '-') break;
     for (j = 1; argv[i][0] == '-' && argv[i][j]; j++) {
       switch (argv[i][j]) {
-      case 'T': O_dumpAST = 1; break;
-      case 'o':
-	outfilename = argv[++i];
-	break;
-      case 'c':
-	O_assemble = 1;
-	O_keepasm = 0;
-	O_dolink = 0;
-	break;
-      case 'S':
-	O_assemble = 0;
-	O_keepasm = 1;
-	O_dolink = 0;
-	break;
-      case 'v': O_verbose = 1; break;
-      default:
-	usage(argv[0]);
+        case 'T': O_dumpAST = 1; break;
+        case 'o':
+          outfilename = argv[++i];
+          break;
+        case 'c':
+          O_assemble = 1;
+          O_keepasm = 0;
+          O_dolink = 0;
+          break;
+        case 'S':
+          O_assemble = 0;
+          O_keepasm = 1;
+          O_dolink = 0;
+          break;
+        case 'v': O_verbose = 1; break;
+        default:
+          usage(argv[0]);
       }
     }
   }
@@ -186,8 +186,8 @@ int main(int argc, char* argv[]) {
     if (O_dolink || O_assemble) {
       objfile = do_assemble(asmfile);
       if (objcnt == (MAXOBJ -2)) {
-	fprintf(stderr, "Too many object files for the compiler to handle\n");
-	exit(1);
+        fprintf(stderr, "Too many object files for the compiler to handle\n");
+        exit(1);
       }
       objlist[objcnt++] = objfile;
       objlist[objcnt] = NULL;
@@ -203,7 +203,7 @@ int main(int argc, char* argv[]) {
     // If we don't need to keep the object, just remove it
     if (!O_keepasm) {
       for (i = 0; objlist[i] != NULL; i++) {
-	unlink(objlist[i]);
+        unlink(objlist[i]);
       }
     }
     for (i = 0; objlist[i] != NULL; i++) {
